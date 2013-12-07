@@ -170,7 +170,7 @@ void doGraphics() {
 		}
 
 int isObjectOnTile (int objX, int objY, int tileX, int tileY){
-	if((objX = tileX*size) && (objY = tileY*size)){
+	if((objX == tileX*size) && (objY == tileY*size)){
 
 		return 1;
 	}
