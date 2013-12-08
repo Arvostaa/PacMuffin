@@ -107,7 +107,7 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 void doLogic() {
 
 
-muffin.posX += muffin.speed*muffin.accelerationX;
+	muffin.posX += muffin.speed*muffin.accelerationX;
 
 	if((muffin.posX < 0))
 	{
@@ -139,12 +139,12 @@ int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 		return 1;
 	}
 	return 0;
-	}
+}
 
 void higlightTile(){
 
-int i = muffin.posX/muffin.size;
-int j = muffin.posY/muffin.size;
+	int i = muffin.posX/muffin.size;
+	int j = muffin.posY/muffin.size;
 	map[i][j].type = FIELD_HIGLIGHT;
 
 	if((muffin.accelerationX > 0)){
@@ -155,65 +155,105 @@ int j = muffin.posY/muffin.size;
 		map[i+1][j].type = FIELD_PATH;
 	}
 	if((muffin.accelerationY < 0) ){
-			map[i][j+1].type = FIELD_PATH;
-		}
+		map[i][j+1].type = FIELD_PATH;
+	}
 	if((muffin.accelerationY > 0) ){
-				map[i][j-1].type = FIELD_PATH;
-			}
+		map[i][j-1].type = FIELD_PATH;
+	}
 
 }
 
 void higlightTile2(int X, int Y){
 	map[X][Y].higlighted = 1;
-
 }
 void higlightMuffinTile(){
 	int i, j;
 	for(i = 0; i < 18; i++){
 		for(j = 0; j < 14; j++){
 			if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
-				higlightTile2(muffin.posX, muffin.posY);
+				higlightTile2(map[i][j].x, map[i][j].y);
 			}
 		}
 	}
 }
 
-void doGraphics() {
 
-	int i,j;
+void initFields (){
+
+	int i, j, k, l;
+
 	for(i = 0; i < 18; i++) {
 		for(j = 0; j < 14; j++) {
+			map[i][j].type = FIELD_WALL;
+			map[i][j].x = i;
+			map[i][j].y = j;
 
+		}
+	}
 
-			if(map[i][j].higlighted){
-							displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
-							}
-			else{
+	for(k = 1; k < 11; k++){
 
-			switch(map[i][j].type) {
+		map[1][k].type = FIELD_PATH;
+		map[1][k].x = 1;
+		map[1][k].y = k;
+		map[14][k].type = FIELD_PATH;
+		map[14][k].x = 14;
+		map[14][k].y =k;
+	}
 
-			case(FIELD_PATH): {
-				displaySurface(Surf_Display, Surf_Path, i*Surf_Path->w, j*Surf_Path->h);
-				break;
-			}
-			case(FIELD_WALL): {
-			displaySurface(Surf_Display, Surf_Wall, i*Surf_Wall->w, j*Surf_Wall->h);
+	for(l = 1; l < 14; l++){
+		map[l][1].type = FIELD_PATH;
+		map[l][1].x = l;
+		map[l][1].y = 1;
+		map[l][8].type = FIELD_PATH;
+		map[l][8].x = l;
+		map[l][8].y = 8;
+		map[l][10].type = FIELD_PATH;
+		map[l][10].x = l;
+		map[l][10].y = 10;
+	}
 
-			break;
-					}
-
-		//	case(FIELD_HIGLIGHT): {
-		//		displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
-		//	break;
-	//		}
-			default:{}
-
-					}
-				}
-			}
 }
 
-			displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
+void doGraphics() {
+
+	initFields();
+	higlightMuffinTile();
+
+	int a,b;
+	for(a = 0; a < 18; a++) {
+		for(b = 0; b < 14; b++) {
+
+
+			if(map[a][b].higlighted){
+				displaySurface(Surf_Display, Surf_Higlight, a*Surf_Higlight->w, b*Surf_Higlight->h);
+			}
+			else{
+
+				switch(map[a][b].type) {
+
+				case(FIELD_PATH): {
+					displaySurface(Surf_Display, Surf_Path, a*Surf_Path->w, b*Surf_Path->h);
+					break;
+				}
+				case(FIELD_WALL): {
+					displaySurface(Surf_Display, Surf_Wall, a*Surf_Wall->w, b*Surf_Wall->h);
+
+					break;
+				}
+
+				//	case(FIELD_HIGLIGHT): {
+				//		displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
+				//	break;
+				//		}
+				default:{}
+
+				}
+			}
+		}
+	}
+
+	displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
 
 }
 
@@ -234,7 +274,7 @@ void doGraphics() {
 		}
 	}
 }
-*/
+ */
 
 
 ///////////////////////////////////////////////////////
@@ -277,7 +317,7 @@ void dishiglightTile(){
 
 				if((inDirectionXd(muffin.accelerationX)) && (muffin.posX != muffin.size)){
 
-				map[i+1][j].type = FIELD_PATH;
+					map[i+1][j].type = FIELD_PATH;
 
 				}
 			}
@@ -289,34 +329,12 @@ void dishiglightTile(){
 ////////////////////////////////////////////////////
 
 
-
-
 int main(void) {
 
-	int i, j, k, l;
-
 	muffin.size = 50;
-	muffin.speed = 10;
+	muffin.speed = 30;
 	muffin.posX = 50;
 	muffin.posY = 50;
-
-	for(i = 0; i < 18; i++) {
-		for(j = 0; j < 14; j++) {
-			map[i][j].type = FIELD_WALL;
-
-		}
-	}
-	for(k = 1; k < 11; k++){
-
-
-		map[1][k].type = FIELD_PATH;
-		map[14][k].type = FIELD_PATH;
-	}
-	for(l = 1; l < 14; l++){
-		map[l][1].type = FIELD_PATH;
-		map[l][8].type = FIELD_PATH;
-		map[l][10].type = FIELD_PATH;
-	}
 
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -336,7 +354,7 @@ int main(void) {
 
 	}
 	Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
-			SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
+	SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
 
 	if((Surf_Wall = SDL_LoadBMP("wall.bmp")) == NULL) {
 		printf("error while loading BMP\n");
@@ -348,24 +366,25 @@ int main(void) {
 	}
 
 	if((Surf_Higlight = SDL_LoadBMP("higlight.bmp")) == NULL) {
-			printf("error while loading BMP\n");
-		}
+		printf("error while loading BMP\n");
+	}
 
 	SDL_Event Event;
 
 	while(running) {
 
-				while(SDL_PollEvent(&Event)) {
-				OnEvent(&Event);
-			}
-
-			SDL_FillRect(Surf_Display, NULL, 12852252);
-
-			doLogic();
-			higlightMuffinTile();
-			doGraphics();
-
-			SDL_Flip(Surf_Display);
-
+		while(SDL_PollEvent(&Event)) {
+			OnEvent(&Event);
 		}
+
+		SDL_FillRect(Surf_Display, NULL, 12852252);
+
+
+		doLogic();
+		//higlightMuffinTile();
+		doGraphics();
+
+		SDL_Flip(Surf_Display);
+
+	}
 }
