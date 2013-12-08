@@ -10,32 +10,27 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "field.h"
+#include "object.h"
 
 #include <SDL/SDL_image.h>
 #include <SDL/SDL.h>
 
 char running = 1;
-float posX = 50;
-float posY = 50; //MODYFIKACJA
-int directionX = 1; //BLOKADA
-int directionY = 1;
-float speed = 10;
-float accelerationX = 0, accelerationY = 0;
-int size = 50;
+//float posX = 50;
+//float posY = 50;
+//int directionX = 1; //BLOKADA
+//int directionY = 1;
+//float speed = 10;
+//float accelerationX = 0, accelerationY = 0;
+//int size = 50;
 
 #define SCREEN_W 800
 #define SCREEN_H 600
 
+object_s muffin;
 
-typedef enum FIELD_TYPE {
-
-	FIELD_WALL = 0,
-	FIELD_HIGLIGHT = 1,
-	FIELD_PATH = 2
-
-}fieldType_e;
-
-fieldType_e map[16][12];
+field_s map[16][12];
 
 SDL_Surface* Surf_Display;
 SDL_Surface* Surf_Pig;
@@ -45,30 +40,27 @@ SDL_Surface* Surf_Higlight;
 
 
 
-int delaycounter = 19999999;
-int delaycounter2 = 19999999;
-
 void OnKeyDowndd(SDLKey sym) {
 	switch(sym) {
 
 	case (SDLK_d): {
-		accelerationX = 0.5;
-		accelerationY = 0;
+		muffin.accelerationX = 0.5; /////////////////////////////////////////
+		muffin.accelerationY = 0;
 		break;
 	}
 	case (SDLK_a): {
-		accelerationX = -0.5;
-		accelerationY = 0;
+		muffin.accelerationX = -0.5;
+		muffin.accelerationY = 0;
 		break;
 	}
 	case (SDLK_w): {
-		accelerationY = -0.5;
-		accelerationX = 0;
+		muffin.accelerationY = -0.5;
+		muffin.accelerationX = 0;
 		break;
 	}
 	case (SDLK_s): {
-		accelerationY = 0.5;
-		accelerationX = 0;
+		muffin.accelerationY = 0.5;
+		muffin.accelerationX = 0;
 		break;
 	}
 	default: {}
@@ -97,8 +89,7 @@ void OnEvent(SDL_Event* Event) {
 }
 
 
-
-int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) {//bool CSurface::ondraw
+int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) {
 	if(Surf_Dest == NULL || Surf_Src == NULL) {
 		return 0;
 	}
@@ -115,29 +106,77 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 
 void doLogic() {
 
-	posX += speed*accelerationX;
 
-	if((posX < 0))
+muffin.posX += muffin.speed*muffin.accelerationX;
+
+	if((muffin.posX < 0))
 	{
-		posX = 0;
+		muffin.posX = 0;
 	}
-	else if ( posX > (SCREEN_W - size))
+	else if ( muffin.posX > (SCREEN_W - muffin.size))
 	{
-		posX = SCREEN_W - size ;
+		muffin.posX = SCREEN_W - muffin.size ;
 
 	}
 
-	posY += speed*accelerationY;
+	muffin.posY += muffin.speed*muffin.accelerationY;
 
-	if (posY < 0)
+	if (muffin.posY < 0)
 	{
-		posY = 0;
+		muffin.posY = 0;
 	}
-	else if (posY > (SCREEN_H - size))
+	else if (muffin.posY > (SCREEN_H - muffin.size))
 	{
-		posY = SCREEN_H - size;
+		muffin.posY = SCREEN_H - muffin.size;
 	}
+}
+
+
+int isObjectOnTile (int objX, int objY, int tileX, int tileY){
+
+	if((objX == tileX*muffin.size) && (objY == tileY*muffin.size)){
+
+		return 1;
 	}
+	return 0;
+	}
+
+void higlightTile(){
+
+int i = muffin.posX/muffin.size;
+int j = muffin.posY/muffin.size;
+	map[i][j].type = FIELD_HIGLIGHT;
+
+	if((muffin.accelerationX > 0)){
+		map[i-1][j].type = FIELD_PATH;
+	}
+
+	if((muffin.accelerationX < 0) ){
+		map[i+1][j].type = FIELD_PATH;
+	}
+	if((muffin.accelerationY < 0) ){
+			map[i][j+1].type = FIELD_PATH;
+		}
+	if((muffin.accelerationY > 0) ){
+				map[i][j-1].type = FIELD_PATH;
+			}
+
+}
+
+void higlightTile2(int X, int Y){
+	map[X][Y].higlighted = 1;
+
+}
+void higlightMuffinTile(){
+	int i, j;
+	for(i = 0; i < 18; i++){
+		for(j = 0; j < 14; j++){
+			if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
+				higlightTile2(muffin.posX, muffin.posY);
+			}
+		}
+	}
+}
 
 void doGraphics() {
 
@@ -145,7 +184,13 @@ void doGraphics() {
 	for(i = 0; i < 18; i++) {
 		for(j = 0; j < 14; j++) {
 
-			switch(map[i][j]) {
+
+			if(map[i][j].higlighted){
+							displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
+							}
+			else{
+
+			switch(map[i][j].type) {
 
 			case(FIELD_PATH): {
 				displaySurface(Surf_Display, Surf_Path, i*Surf_Path->w, j*Surf_Path->h);
@@ -157,62 +202,25 @@ void doGraphics() {
 			break;
 					}
 
-			case(FIELD_HIGLIGHT): {
-				displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
-			break;
-			}
+		//	case(FIELD_HIGLIGHT): {
+		//		displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
+		//	break;
+	//		}
 			default:{}
+
 					}
 				}
 			}
+}
 
-			displaySurface(Surf_Display, Surf_Pig, posX, posY);
-		}
-
-int isObjectOnTile (int objX, int objY, int tileX, int tileY){
-	if((objX == tileX*size) && (objY == tileY*size)){
-
-		return 1;
-	}
-	return 0;
-	}
-
-void higlightTile(){
-
-int i = posX/size;
-int j = posY/size;
-	map[i][j] = FIELD_HIGLIGHT;
-
-	if((accelerationX > 0)){
-		map[i-1][j] = FIELD_PATH;
-	}
-
-	if((accelerationX < 0) ){
-		map[i+1][j] = FIELD_PATH;
-	}
-	if((accelerationY < 0) ){
-			map[i][j+1] = FIELD_PATH;
-		}
-	if((accelerationY > 0) ){
-				map[i][j-1] = FIELD_PATH;
-			}
-
-	//map[i-1][j] = FIELD_PATH;
-//	map[i+1][j] = FIELD_PATH;
+			displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
 
 }
 
 
-void higlightMuffinTile(){
-	int i, j;
-	for(i = 0; i < 18; i++){
-		for(j = 0; j < 14; j++){
-			if(isObjectOnTile(posX, posY, i, j)){
-				higlightTile();
-			}
-		}
-	}
-}
+
+
+
 
 ////////////////** chodzenie po ścieżce ** /////////////////
 /*int isOnFieldPath(int i, int j){
@@ -265,11 +273,11 @@ void dishiglightTile(){
 	for(i = 0; i < 18; i++){
 		for(j = 0; j < 14; j++){
 
-			if(isObjectOnTile(posX, posY, i, j)){
+			if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
 
-				if((inDirectionXd(accelerationX)) && (posX != size)){
+				if((inDirectionXd(muffin.accelerationX)) && (muffin.posX != muffin.size)){
 
-				map[i+1][j] = FIELD_PATH;
+				map[i+1][j].type = FIELD_PATH;
 
 				}
 			}
@@ -285,42 +293,30 @@ void dishiglightTile(){
 
 int main(void) {
 
-
 	int i, j, k, l;
 
+	muffin.size = 50;
+	muffin.speed = 10;
+	muffin.posX = 50;
+	muffin.posY = 50;
 
 	for(i = 0; i < 18; i++) {
 		for(j = 0; j < 14; j++) {
-			map[i][j] = FIELD_WALL;
+			map[i][j].type = FIELD_WALL;
 
 		}
 	}
 	for(k = 1; k < 11; k++){
 
 
-		map[1][k] = FIELD_PATH;
-		map[14][k] = FIELD_PATH;
+		map[1][k].type = FIELD_PATH;
+		map[14][k].type = FIELD_PATH;
 	}
 	for(l = 1; l < 14; l++){
-		map[l][1] = FIELD_PATH;
-		map[l][8] = FIELD_PATH;
-		map[l][10] = FIELD_PATH;
+		map[l][1].type = FIELD_PATH;
+		map[l][8].type = FIELD_PATH;
+		map[l][10].type = FIELD_PATH;
 	}
-	/*map[1][4] = FIELD_WATER;
-	map[1][5] = FIELD_WATER;
-	map[1][6] = FIELD_WATER;
-	map[1][7] = FIELD_WATER;
-	map[1][8] = FIELD_WATER;
-	map[1][9] = FIELD_WATER;
-	map[1][10] = FIELD_WATER;
-	map[2][10] = FIELD_WATER;
-	map[3][10] = FIELD_WATER;
-	map[4][10] = FIELD_WATER;
-	map[5][10] = FIELD_WATER;
-	map[6][10] = FIELD_WATER;
-	map[7][10] = FIELD_WATER;
-	map[8][10] = FIELD_WATER;
-	*/
 
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -334,7 +330,7 @@ int main(void) {
 	}
 
 
-	if((Surf_Pig = SDL_LoadBMP("piggy.bmp")) == NULL) { // SDL_LoadMap
+	if((Surf_Pig = SDL_LoadBMP("piggy.bmp")) == NULL) {
 
 		printf("error while loading BMP\n");
 
@@ -359,24 +355,17 @@ int main(void) {
 
 	while(running) {
 
-
-			while(SDL_PollEvent(&Event)) {
+				while(SDL_PollEvent(&Event)) {
 				OnEvent(&Event);
 			}
 
 			SDL_FillRect(Surf_Display, NULL, 12852252);
+
 			doLogic();
-			doGraphics();
 			higlightMuffinTile();
-		//	dishiglightTile();
+			doGraphics();
 
-
-			//printf("%lf     %lf  \n\n", accelerationY, accelerationX);
-			//if(accelerationX > 0){
-			//	printf("vsd\n\n");
-			//}
 			SDL_Flip(Surf_Display);
 
 		}
-
-	}
+}
