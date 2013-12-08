@@ -16,5 +16,15 @@ typedef enum FIELD_TYPE {
 
 }fieldType_e;
 
+typedef struct FIELD_STRUCT {
+
+fieldType_e type;
+int x, y;
+int higlighted;
+
+} field_s;
+
+
+
 
 #endif /* FIELD_H_ */
