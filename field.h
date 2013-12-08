@@ -11,7 +11,7 @@
 typedef enum FIELD_TYPE {
 
 	FIELD_WALL = 0,
-	FIELD_HIGLIGHT = 1,
+	FIELD_HIGHLIGHT = 1,
 	FIELD_PATH = 2
 
 }fieldType_e;
@@ -20,7 +20,7 @@ typedef struct FIELD_STRUCT {
 
 fieldType_e type;
 int x, y;
-int higlighted;
+int highlighted;
 
 } field_s;
 
