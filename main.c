@@ -105,26 +105,71 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 	return 0;
 }
 
-void highlightTile(){
 
-	int i = muffin.posX/muffin.size;
-	int j = muffin.posY/muffin.size;
-	map[i][j].type = FIELD_HIGHLIGHT;
+int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 
-	if((muffin.accelerationX > 0)){
-		map[i-1][j].type = FIELD_PATH;
+	if((objX == tileX*muffin.size) && (objY == tileY*muffin.size)){
+
+		return 1;
+	}
+	return 0;
+}
+
+int isTouchingField(muffin_posX, muffin_posY){
+
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if(map[i][j-1].type == FIELD_WALL){
+				return 1;
+			}
+			else if(map[i][j+1].type == FIELD_WALL){
+				return 2;
+			}
+			else if(map[i-1][j].type == FIELD_WALL){
+				return 3;
+			}
+			else if(map[i+1][j].type == FIELD_WALL){
+				return 4;
+			}
+		}
+
 	}
 
-	if((muffin.accelerationX < 0) ){
-		map[i+1][j].type = FIELD_PATH;
-	}
-	if((muffin.accelerationY < 0) ){
-		map[i][j+1].type = FIELD_PATH;
-	}
-	if((muffin.accelerationY > 0) ){
-		map[i][j-1].type = FIELD_PATH;
-	}
 
+	return 0;
+}
+
+void returntOnPath(){
+	int i, j;
+		for(i = 0; i < MAP_W; i++){
+			for(j = 0; j < MAP_H; j++){
+				if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
+					switch(isTouchingField(muffin.posX, muffin.posY)){
+					case 1:{
+						muffin.posX += muffin.size;
+						break;
+					}
+					case 2:{
+						muffin.posX -= muffin.size;
+						break;
+					}
+					case 3:{
+						muffin.posY += muffin.size;
+						break;
+					}
+					case 4: {
+						muffin.posY += muffin.size;
+						break;
+
+					}
+					default:{
+					}
+
+					}
+				}
+			}
+		}
 }
 
 void doLogic() {
@@ -152,17 +197,12 @@ void doLogic() {
 	{
 		muffin.posY = SCREEN_H - muffin.size;
 	}
+	returntOnPath();
+
+
 }
 
 
-int isObjectOnTile (int objX, int objY, int tileX, int tileY){
-
-	if((objX == tileX*muffin.size) && (objY == tileY*muffin.size)){
-
-		return 1;
-	}
-	return 0;
-}
 
 
 
@@ -257,10 +297,6 @@ void doGraphics() {
 					break;
 				}
 
-				//case(FIELD_HIGLIGHT): {
-					//	displaySurface(Surf_Display, Surf_Higlight, i*Surf_Higlight->w, j*Surf_Higlight->h);
-				//	break;
-				//		}
 				default:{}
 
 				}
@@ -291,36 +327,6 @@ void doGraphics() {
 	}
 }
  */
-
-
-///////////////////////////////////////////////////////
-int inDirectionXd(float accelX){
-	if(accelX > 0){
-		return 1;
-	}
-	else return 0;
-}
-
-int inDirectionXa(float accelX){
-	if(accelX < 0){
-		return 1;
-	}
-	else return 0;
-}
-
-int inDirectionYs(float accelY){
-	if(accelY > 0){
-		return 1;
-	}
-	else return 0;
-}
-
-int inDirectionYw(float accelerationY){
-	if(accelerationY < 0){
-		return 1;
-	}
-	else return 0;
-}
 
 
 
