@@ -29,6 +29,7 @@ char running = 1;
 #define SCREEN_H 600
 #define MAP_W 16
 #define MAP_H 12
+#define TILE_SIZE 50
 object_s muffin;
 
 field_s map[16][12];
@@ -115,64 +116,107 @@ int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 	return 0;
 }
 
-int isTouchingField(muffin_posX, muffin_posY){
 
+int isTileOnTile(int x1, int y1, int x2, int y2, int size){
+
+	if((x1 == x2) && (y1==y2)){
+		return 1;
+	}
+	else if (y1 == y2){
+
+		if (   (x1 <= x2)  &&  ( abs(x1 - x2) < size)   )  {
+
+			return 1;
+		}
+		else if ( (x1 <= x2)  && ( abs(x1 - x2) == 0 ) ) {
+
+			return 1;
+		}
+		else if ( (x2 <= x1) &&  ( abs(x1 - x2) < size)  ) {
+			return 1;
+		}
+		else if (((x2 <= x1)  &&  (abs(x1 - x2) == 0)) ){
+			return 1;
+		}
+		return 0;
+	}
+
+	if((x1 == x2) && (y1==y2)){
+			return 1;
+		}
+	else if (x1 == x2){
+
+		if (   (y1 <= y2)  &&  ( abs(y1 - y2) < size)   )  {
+
+			return 1;
+		}
+		else if ( (y1 <= y2)  && ( abs(y1 - y2) == 0 ) ) {
+
+			return 1;
+		}
+		else if ( (y2 <= y1) &&  ( abs(y1 - y2) < size)  ) {
+			return 1;
+		}
+		else if (((y2 <= y1)  &&  (abs(y1 - y2) == 0)) ){
+			return 1;
+		}
+		return 0;
+	}
+	else return 0;
+}
+
+int isObjectOnWall(int wallX, int wallY){
+
+	if(map[wallX][wallY].type == FIELD_WALL){
+			return 1;
+		}
+	else return 0;
+}
+
+
+
+
+void goToPathx(int wallX, int wallY){
+
+
+		if(muffin.accelerationX < 0){
+			muffin.posX = map[wallX][wallY].x + muffin.size;
+		}
+		else if(muffin.accelerationX > 0){
+			muffin.posX = map[wallX][wallY].x - muffin.size;
+
+		}
+	}
+
+void goToPathy(int wallX, int wallY){
+		if(muffin.accelerationY < 0){
+			muffin.posY = map[wallX][wallY].y + muffin.size;
+		}
+		else if(muffin.accelerationY > 0){
+			muffin.posY = map[wallX][wallY].y - muffin.size;
+		}
+
+}
+
+void goToPath(){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if(map[i][j-1].type == FIELD_WALL){
-				return 1;
-			}
-			else if(map[i][j+1].type == FIELD_WALL){
-				return 2;
-			}
-			else if(map[i-1][j].type == FIELD_WALL){
-				return 3;
-			}
-			else if(map[i+1][j].type == FIELD_WALL){
-				return 4;
-			}
-		}
-
-	}
-
-
-	return 0;
-}
-
-void returntOnPath(){
-	int i, j;
-		for(i = 0; i < MAP_W; i++){
-			for(j = 0; j < MAP_H; j++){
-				if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
-					switch(isTouchingField(muffin.posX, muffin.posY)){
-					case 1:{
-						muffin.posX += muffin.size;
-						break;
-					}
-					case 2:{
-						muffin.posX -= muffin.size;
-						break;
-					}
-					case 3:{
-						muffin.posY += muffin.size;
-						break;
-					}
-					case 4: {
-						muffin.posY += muffin.size;
-						break;
-
-					}
-					default:{
-					}
-
-					}
+			if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if (isObjectOnWall(i,j)){
+					goToPathx(i, j);
+					goToPathy(i, j);
 				}
 			}
+
 		}
+	}
 }
 
+
+
 void doLogic() {
+
 
 
 	muffin.posX += muffin.speed*muffin.accelerationX;
@@ -197,7 +241,7 @@ void doLogic() {
 	{
 		muffin.posY = SCREEN_H - muffin.size;
 	}
-	returntOnPath();
+
 
 
 }
@@ -219,10 +263,10 @@ void highlightMuffinTile(){
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
 			if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
-				highlightTile2(map[i][j].x, map[i][j].y);
+				highlightTile2(i, j);
 			}
 			else{
-				unhighlightTile2(map[i][j].x, map[i][j].y);
+				unhighlightTile2(i,j);
 			}
 		}
 	}
@@ -236,8 +280,8 @@ void initFields (){
 	for(i = 0; i < MAP_W; i++) {
 		for(j = 0; j < MAP_H; j++) {
 			map[i][j].type = FIELD_WALL;
-			map[i][j].x = i;
-			map[i][j].y = j;
+			map[i][j].x = i*TILE_SIZE;
+			map[i][j].y = j*TILE_SIZE;
 
 
 		}
@@ -247,27 +291,27 @@ void initFields (){
 
 		map[1][k].type = FIELD_PATH;
 
-		map[1][k].x = 1;
-		map[1][k].y = k;
+		map[1][k].x = TILE_SIZE;
+		map[1][k].y = TILE_SIZE;
 		map[14][k].type = FIELD_PATH;
 
-		map[14][k].x = 14;
-		map[14][k].y =k;
+		map[14][k].x = 14*TILE_SIZE;
+		map[14][k].y =k*TILE_SIZE;
 	}
 
 	for(l = 1; l < MAP_W - 2; l++){
 		map[l][1].type = FIELD_PATH;
 
-		map[l][1].x = l;
-		map[l][1].y = 1;
+		map[l][1].x = l*TILE_SIZE;
+		map[l][1].y = TILE_SIZE;
 		map[l][8].type = FIELD_PATH;
 		;
-		map[l][8].x = l;
-		map[l][8].y = 8;
+		map[l][8].x = l*TILE_SIZE;
+		map[l][8].y = 8*TILE_SIZE;
 		map[l][10].type = FIELD_PATH;
 
-		map[l][10].x = l;
-		map[l][10].y = 10;
+		map[l][10].x = l*TILE_SIZE;
+		map[l][10].y = 10*TILE_SIZE;
 	}
 
 }
@@ -276,9 +320,13 @@ void doGraphics() {
 
 	highlightMuffinTile();
 
+
 	int a,b;
 	for(a = 0; a < MAP_W; a++) {
 		for(b = 0; b < MAP_H; b++) {
+			//if(isTileOnTile(muffin.posX, muffin.posY, map[a][b].x, map[a][b].y, TILE_SIZE)){
+			//	printf("zazaza\n\n");
+		//	}else printf("NOTNOT\n");
 
 			if(map[a][b].highlighted){
 			displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
@@ -304,6 +352,7 @@ void doGraphics() {
 		}
 
 	}
+
 
 	displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
 
@@ -382,6 +431,8 @@ int main(void) {
 
 
 		doLogic();
+		goToPath();
+
 		initFields();
 		doGraphics();
 
