@@ -17,21 +17,14 @@
 #include <SDL/SDL.h>
 
 char running = 1;
-//float posX = 50;
-//float posY = 50;
-//int directionX = 1; //BLOKADA
-//int directionY = 1;
-//float speed = 10;
-//float accelerationX = 0, accelerationY = 0;
-//int size = 50;
 
 #define SCREEN_W 800
 #define SCREEN_H 600
 #define MAP_W 16
 #define MAP_H 12
 #define TILE_SIZE 50
-object_s muffin;
 
+object_s muffin;
 field_s map[16][12];
 
 SDL_Surface* Surf_Display;
@@ -39,7 +32,6 @@ SDL_Surface* Surf_Pig;
 SDL_Surface* Surf_Path;
 SDL_Surface* Surf_Wall;
 SDL_Surface* Surf_Highlight;
-
 
 
 void OnKeyDowndd(SDLKey sym) {
@@ -90,7 +82,6 @@ void OnEvent(SDL_Event* Event) {
 	}
 }
 
-
 int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) {
 	if(Surf_Dest == NULL || Surf_Src == NULL) {
 		return 0;
@@ -106,7 +97,6 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 	return 0;
 }
 
-
 int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 
 	if((objX == tileX*muffin.size) && (objY == tileY*muffin.size)){
@@ -116,12 +106,15 @@ int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 	return 0;
 }
 
-
 int isTileOnTile(int x1, int y1, int x2, int y2, int size){
 
 	if((x1 == x2) && (y1==y2)){
 		return 1;
 	}
+	else if ( ( abs(y1 - y2) < size) && ( abs(x1 - x2) < size) ){
+		return 1;
+	}
+
 	else if (y1 == y2){
 
 		if (   (x1 <= x2)  &&  ( abs(x1 - x2) < size)   )  {
@@ -142,8 +135,8 @@ int isTileOnTile(int x1, int y1, int x2, int y2, int size){
 	}
 
 	if((x1 == x2) && (y1==y2)){
-			return 1;
-		}
+		return 1;
+	}
 	else if (x1 == x2){
 
 		if (   (y1 <= y2)  &&  ( abs(y1 - y2) < size)   )  {
@@ -168,34 +161,28 @@ int isTileOnTile(int x1, int y1, int x2, int y2, int size){
 int isObjectOnWall(int wallX, int wallY){
 
 	if(map[wallX][wallY].type == FIELD_WALL){
-			return 1;
-		}
+		return 1;
+	}
 	else return 0;
 }
 
-
-
-
 void goToPathx(int wallX, int wallY){
 
-
-		if(muffin.accelerationX < 0){
-			muffin.posX = map[wallX][wallY].x + muffin.size;
-		}
-		else if(muffin.accelerationX > 0){
-			muffin.posX = map[wallX][wallY].x - muffin.size;
-
-		}
+	if(muffin.accelerationX < 0){
+		muffin.posX = map[wallX][wallY].x + muffin.size;
 	}
+	else if(muffin.accelerationX > 0){
+		muffin.posX = map[wallX][wallY].x - muffin.size;
+	}
+}
 
 void goToPathy(int wallX, int wallY){
-		if(muffin.accelerationY < 0){
-			muffin.posY = map[wallX][wallY].y + muffin.size;
-		}
-		else if(muffin.accelerationY > 0){
-			muffin.posY = map[wallX][wallY].y - muffin.size;
-		}
-
+	if(muffin.accelerationY < 0){
+		muffin.posY = map[wallX][wallY].y + muffin.size;
+	}
+	else if(muffin.accelerationY > 0){
+		muffin.posY = map[wallX][wallY].y - muffin.size;
+	}
 }
 
 void goToPath(){
@@ -214,10 +201,7 @@ void goToPath(){
 }
 
 
-
 void doLogic() {
-
-
 
 	muffin.posX += muffin.speed*muffin.accelerationX;
 
@@ -242,12 +226,7 @@ void doLogic() {
 		muffin.posY = SCREEN_H - muffin.size;
 	}
 
-
-
 }
-
-
-
 
 
 void highlightTile2(int X, int Y){
@@ -275,37 +254,33 @@ void highlightMuffinTile(){
 
 void initFields (){
 
-	int i, j, k, l;
+	int i, j, k, l,m,n;
 
 	for(i = 0; i < MAP_W; i++) {
 		for(j = 0; j < MAP_H; j++) {
 			map[i][j].type = FIELD_WALL;
 			map[i][j].x = i*TILE_SIZE;
 			map[i][j].y = j*TILE_SIZE;
-
-
 		}
 	}
 
 	for(k = 1; k < MAP_H - 1; k++){
-
-		map[1][k].type = FIELD_PATH;
-
+		map[1][k].type = FIELD_PATH; // 1 i 14: kolumny
 		map[1][k].x = TILE_SIZE;
 		map[1][k].y = TILE_SIZE;
 		map[14][k].type = FIELD_PATH;
-
 		map[14][k].x = 14*TILE_SIZE;
 		map[14][k].y =k*TILE_SIZE;
 	}
 
 	for(l = 1; l < MAP_W - 2; l++){
 		map[l][1].type = FIELD_PATH;
-
 		map[l][1].x = l*TILE_SIZE;
 		map[l][1].y = TILE_SIZE;
+		map[l][5].type = FIELD_PATH;
+		map[l][5].x = l*TILE_SIZE;
+		map[l][5].y = 5*TILE_SIZE;
 		map[l][8].type = FIELD_PATH;
-		;
 		map[l][8].x = l*TILE_SIZE;
 		map[l][8].y = 8*TILE_SIZE;
 		map[l][10].type = FIELD_PATH;
@@ -313,7 +288,23 @@ void initFields (){
 		map[l][10].x = l*TILE_SIZE;
 		map[l][10].y = 10*TILE_SIZE;
 	}
+	for(n = 1; n < 6; n++){
+		map[5][n].type = FIELD_PATH;
+		map[5][n].x = 5*TILE_SIZE;
+		map[5][n].y = n*TILE_SIZE;
+	}
 
+	for(m = 1; m < 6; m++){
+		map[10][m].type = FIELD_PATH;
+		map[10][m].x = 10*TILE_SIZE;
+		map[10][m].y = m*TILE_SIZE;
+	}
+	map[11][9].type = FIELD_PATH;
+	map[11][9].x = 11*TILE_SIZE;
+	map[11][9].y = 9*TILE_SIZE;
+	map[4][9].type = FIELD_PATH;
+	map[4][9].x = 4*TILE_SIZE;
+	map[4][9].y = 8*TILE_SIZE;
 }
 
 void doGraphics() {
@@ -326,10 +317,10 @@ void doGraphics() {
 		for(b = 0; b < MAP_H; b++) {
 			//if(isTileOnTile(muffin.posX, muffin.posY, map[a][b].x, map[a][b].y, TILE_SIZE)){
 			//	printf("zazaza\n\n");
-		//	}else printf("NOTNOT\n");
+			//	}else printf("NOTNOT\n");
 
 			if(map[a][b].highlighted){
-			displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
+				displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
 			}
 			else{
 
@@ -358,34 +349,12 @@ void doGraphics() {
 
 }
 
-
-
-
-
-
-////////////////** chodzenie po ścieżce ** /////////////////
-/*int isOnFieldPath(int i, int j){
-	for(i = 0; i < 18; i++){
-		for(j = 0, j < 14, j++){
-			if(isObjectOnTile){
-				ifmap[i][j] = FIELD_WALL{
-
-				}
-			}
-		}
-	}
-}
- */
-
-
-
 int main(void) {
 
 	muffin.size = 50;
 	muffin.speed = 10;
 	muffin.posX = 50;
 	muffin.posY = 50;
-
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		return 0;
@@ -429,14 +398,11 @@ int main(void) {
 
 		SDL_FillRect(Surf_Display, NULL, 12852252);
 
-
 		doLogic();
 		goToPath();
-
 		initFields();
 		doGraphics();
 
 		SDL_Flip(Surf_Display);
-
 	}
 }
