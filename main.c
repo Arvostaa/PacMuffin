@@ -17,6 +17,7 @@
 #include <SDL/SDL.h>
 
 char running = 1;
+int release_counter = 0;
 
 #define SCREEN_W 800
 #define SCREEN_H 600
@@ -185,43 +186,43 @@ int isObjectOnPath(int wallX, int wallY){
 }
 
 
-void ghost1ToWallx(int wallX, int wallY){
-	if(ghost1.accelerationX < 0){
-		ghost1.posX = map[wallX][wallY].x - muffin.size;
+void ghost1ToWallx(int wallX, int wallY, object_s *ghost1){
+	if(ghost1->accelerationX < 0){
+		ghost1->posX = map[wallX][wallY].x + TILE_SIZE;
 	}
-	else if(ghost1.accelerationX > 0){
-		ghost1.posX = map[wallX][wallY].x + muffin.size;
-	}
-}
-
-void ghost1ToWally(int wallX, int wallY){
-	if(ghost1.accelerationY < 0){
-
-		ghost1.posY = map[wallX][wallY].y - muffin.size;
-	}
-	else if(ghost1.accelerationY > 0){
-		ghost1.posY = map[wallX][wallY].y + muffin.size;
-	}
-
-}
-
-void goToPathx(int wallX, int wallY, object_s obj){
-
-	if(obj.accelerationX < 0){
-		obj.posX= map[wallX][wallY].x + muffin.size;
-	}
-	else if(obj.accelerationX > 0){
-		obj.posX = map[wallX][wallY].x - muffin.size;
+	else if(ghost1->accelerationX > 0){
+		ghost1->posX = map[wallX][wallY].x - TILE_SIZE;
 	}
 }
 
-void goToPathy(int wallX, int wallY, object_s obj){
-	if(obj.accelerationY < 0){
+void ghost1ToWally(int wallX, int wallY, object_s *ghost1){
+	if(ghost1->accelerationY < 0){
 
-		obj.posY = map[wallX][wallY].y + muffin.size;
+		ghost1->posY = map[wallX][wallY].y + TILE_SIZE;
 	}
-	else if(obj.accelerationY > 0){
-		obj.posY = map[wallX][wallY].y - muffin.size;
+	else if(ghost1->accelerationY > 0){
+		ghost1->posY = map[wallX][wallY].y - TILE_SIZE;
+	}
+
+}
+
+void goToPathx(int wallX, int wallY, object_s *obj){
+
+	if((obj->accelerationX) < 0){
+		obj->posX= map[wallX][wallY].x + TILE_SIZE;
+	}
+	else if(obj->accelerationX > 0){
+		obj->posX = map[wallX][wallY].x - TILE_SIZE;
+	}
+}
+
+void goToPathy(int wallX, int wallY, object_s *obj){
+	if(obj->accelerationY < 0){
+
+		obj->posY = map[wallX][wallY].y + TILE_SIZE;
+	}
+	else if(obj->accelerationY > 0){
+		obj->posY = map[wallX][wallY].y - TILE_SIZE;
 	}
 
 }
@@ -232,8 +233,8 @@ void goToPathMuffin(){
 		for(j = 0; j < MAP_H; j++){
 			if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				if (isObjectOnWall(i,j)){
-					goToPathx(i, j, muffin);
-					goToPathy(i, j, muffin);
+					goToPathx(i, j, &muffin);
+					goToPathy(i, j, &muffin);
 				}
 			}
 
@@ -242,28 +243,50 @@ void goToPathMuffin(){
 }
 
 
-void walkinGhost(){
+void walkinGhostdown(){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
 			if (isTileOnTile(ghost1.posX, ghost1.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				if(isObjectOnPath(i, j)){
-					ghost1ToWally(i, j);
-					ghost1.accelerationY = ghost2.accelerationY;
+					goToPathy(i, j, &ghost1);
+					ghost1.accelerationY = -(ghost1.accelerationY);
+					release_counter++;
+
 				}
+
 			}
+
 		}
 	}
+
+}
+
+int walkinGhostup(){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if (isTileOnTile(ghost1.posX, ghost1.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if(isObjectOnPath(i, j)){
+					ghost1.accelerationY = -(ghost1.accelerationY);
+					ghost2.accelerationY = -(ghost2.accelerationY);
+					ghost1ToWally(i, j, &ghost1);
+					ghost1ToWally(i, j, &ghost4);
+					return 1;
+				}
+				printf("%f\n\n", ghost1.accelerationY);
+			}
+
+		}
+	}
+	return 0;
 }
 
 
 
 void doLogic() {
 
-
 	muffin.posX += muffin.speed*muffin.accelerationX;
-
-
 	//
 	if(muffin.posY < 200){
 		ghost2.close_counter = 1;
@@ -272,9 +295,7 @@ void doLogic() {
 	if(muffin.posY < 100){
 		ghost4.close_counter = 1;
 	}
-
 	//
-
 	if((muffin.posX < 0))
 	{
 		muffin.posX = 0;
@@ -287,10 +308,10 @@ void doLogic() {
 
 	muffin.posY += muffin.speed*muffin.accelerationY;
 
-	ghost1.posY += ghost1.speed*ghost1.accelerationX;
-	ghost2.posY += ghost1.speed*ghost1.accelerationX;
-	ghost3.posY += ghost1.speed*ghost2.accelerationX;
-	ghost4.posY += ghost1.speed*ghost2.accelerationX;
+	ghost1.posY += ghost1.speed*ghost1.accelerationY;
+	ghost2.posY += ghost1.speed*ghost1.accelerationY;
+	ghost3.posY += ghost1.speed*ghost1.accelerationY;
+	ghost4.posY += ghost1.speed*ghost1.accelerationY;
 
 
 	if (muffin.posY < 0)
@@ -451,16 +472,16 @@ int main(void) {
 
 	ghost1.posX = 300;
 	ghost1.posY = 100;
-	ghost2.posX = 400;
-	ghost2.posY = 200;
+	ghost2.posX = 350;
+	ghost2.posY = 100;
 	ghost3.posX = 400;
-	ghost3.posY = 150;
-	ghost4.posX = 350;
-	ghost4.posY = 150;
+	ghost3.posY = 100;
+	ghost4.posX = 450;
+	ghost4.posY = 100;
 
 	ghost1.accelerationX = 0.5;
 	ghost1.accelerationY = 0.5;
-	ghost1.speed = 2;
+	ghost1.speed = 12;
 	ghost2.accelerationX = -0.5;
 	ghost2.accelerationY = -0.5;
 
@@ -545,8 +566,11 @@ int main(void) {
 		SDL_FillRect(Surf_Display, NULL, 12852252);
 
 		doLogic();
-		walkinGhost();
+
 		goToPathMuffin();
+
+		walkinGhostdown();
+
 
 		initFields();
 		doGraphics();
