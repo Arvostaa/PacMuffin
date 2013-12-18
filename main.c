@@ -25,20 +25,30 @@ char running = 1;
 #define TILE_SIZE 50
 
 object_s muffin;
+object_s ghost1;
+object_s ghost2;
+object_s ghost3;
+object_s ghost4;
 field_s map[16][12];
 
 SDL_Surface* Surf_Display;
 SDL_Surface* Surf_Pig;
 SDL_Surface* Surf_Path;
 SDL_Surface* Surf_Wall;
+SDL_Surface* Surf_Gate;
 SDL_Surface* Surf_Highlight;
+SDL_Surface* Surf_Ghost1;
+SDL_Surface* Surf_Ghost2;
+SDL_Surface* Surf_Ghost3;
+SDL_Surface* Surf_Ghost4;
+
 
 
 void OnKeyDowndd(SDLKey sym) {
 	switch(sym) {
 
 	case (SDLK_d): {
-		muffin.accelerationX = 0.5; /////////////////////////////////////////
+		muffin.accelerationX = 0.5;
 		muffin.accelerationY = 0;
 		break;
 	}
@@ -166,26 +176,60 @@ int isObjectOnWall(int wallX, int wallY){
 	else return 0;
 }
 
+int isObjectOnPath(int wallX, int wallY){
+
+	if(map[wallX][wallY].type == FIELD_PATH){
+		return 1;
+	}
+	else return 0;
+}
+
+
+void ghost1ToWallx(int wallX, int wallY){
+	if(ghost1.accelerationX < 0){
+		ghost1.posX = map[wallX][wallY].x - muffin.size;
+	}
+	else if(ghost1.accelerationX > 0){
+		ghost1.posX = map[wallX][wallY].x + muffin.size;
+	}
+}
+
+void ghost1ToWally(int wallX, int wallY){
+	if(ghost1.accelerationY < 0){
+
+		ghost1.posY = map[wallX][wallY].y - muffin.size;
+	}
+	else if(ghost1.accelerationY > 0){
+		ghost1.posY = map[wallX][wallY].y + muffin.size;
+	}
+
+}
+
 void goToPathx(int wallX, int wallY){
 
 	if(muffin.accelerationX < 0){
-		muffin.posX = map[wallX][wallY].x + muffin.size;
+		muffin.posX= map[wallX][wallY].x + muffin.size;
 	}
 	else if(muffin.accelerationX > 0){
 		muffin.posX = map[wallX][wallY].x - muffin.size;
 	}
 }
 
+
+
+
 void goToPathy(int wallX, int wallY){
 	if(muffin.accelerationY < 0){
+
 		muffin.posY = map[wallX][wallY].y + muffin.size;
 	}
 	else if(muffin.accelerationY > 0){
 		muffin.posY = map[wallX][wallY].y - muffin.size;
 	}
+
 }
 
-void goToPath(){
+void goToPathMuffin(){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
@@ -201,9 +245,38 @@ void goToPath(){
 }
 
 
+void walkinGhost(){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if (isTileOnTile(ghost1.posX, ghost1.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if(isObjectOnPath(i, j)){
+					ghost1ToWally(i, j);
+					ghost1.accelerationY = ghost2.accelerationY;
+				}
+			}
+		}
+	}
+}
+
+
+
 void doLogic() {
 
+
 	muffin.posX += muffin.speed*muffin.accelerationX;
+
+
+	//
+	if(muffin.posY < 200){
+		ghost2.close_counter = 1;
+		ghost3.close_counter = 1;
+	}
+	if(muffin.posY < 100){
+		ghost4.close_counter = 1;
+	}
+
+	//
 
 	if((muffin.posX < 0))
 	{
@@ -217,10 +290,17 @@ void doLogic() {
 
 	muffin.posY += muffin.speed*muffin.accelerationY;
 
+	ghost1.posY += ghost1.speed*ghost1.accelerationX;
+	ghost2.posY += ghost1.speed*ghost1.accelerationX;
+	ghost3.posY += ghost1.speed*ghost2.accelerationX;
+	ghost4.posY += ghost1.speed*ghost2.accelerationX;
+
+
 	if (muffin.posY < 0)
 	{
 		muffin.posY = 0;
 	}
+
 	else if (muffin.posY > (SCREEN_H - muffin.size))
 	{
 		muffin.posY = SCREEN_H - muffin.size;
@@ -273,6 +353,7 @@ void initFields (){
 		map[14][k].y =k*TILE_SIZE;
 	}
 
+
 	for(l = 1; l < MAP_W - 2; l++){
 		map[l][1].type = FIELD_PATH;
 		map[l][1].x = l*TILE_SIZE;
@@ -305,6 +386,16 @@ void initFields (){
 	map[4][9].type = FIELD_PATH;
 	map[4][9].x = 4*TILE_SIZE;
 	map[4][9].y = 8*TILE_SIZE;
+
+	map[5][3].type = FIELD_GATE;
+	map[5][3].x = 8*TILE_SIZE;
+	map[5][3].y = 3*TILE_SIZE;
+
+	map[10][3].type = FIELD_GATE;
+	map[10][3].x = 7*TILE_SIZE;
+	map[10][3].y = 3*TILE_SIZE;
+
+
 }
 
 void doGraphics() {
@@ -315,9 +406,6 @@ void doGraphics() {
 	int a,b;
 	for(a = 0; a < MAP_W; a++) {
 		for(b = 0; b < MAP_H; b++) {
-			//if(isTileOnTile(muffin.posX, muffin.posY, map[a][b].x, map[a][b].y, TILE_SIZE)){
-			//	printf("zazaza\n\n");
-			//	}else printf("NOTNOT\n");
 
 			if(map[a][b].highlighted){
 				displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
@@ -335,6 +423,10 @@ void doGraphics() {
 
 					break;
 				}
+				case(FIELD_GATE): {
+					displaySurface(Surf_Display, Surf_Gate, a*Surf_Gate->w, b*Surf_Gate->h);
+					break;
+				}
 
 				default:{}
 
@@ -346,6 +438,10 @@ void doGraphics() {
 
 
 	displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
+	displaySurface(Surf_Display, Surf_Ghost1, ghost1.posX, ghost1.posY);
+	displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
+	displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
+	displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
 
 }
 
@@ -355,6 +451,21 @@ int main(void) {
 	muffin.speed = 10;
 	muffin.posX = 50;
 	muffin.posY = 50;
+
+	ghost1.posX = 300;
+	ghost1.posY = 100;
+	ghost2.posX = 400;
+	ghost2.posY = 200;
+	ghost3.posX = 400;
+	ghost3.posY = 150;
+	ghost4.posX = 350;
+	ghost4.posY = 150;
+
+	ghost1.accelerationX = 0.5;
+	ghost1.accelerationY = 0.5;
+	ghost1.speed = 2;
+	ghost2.accelerationX = -0.5;
+	ghost2.accelerationY = -0.5;
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		return 0;
@@ -378,6 +489,43 @@ int main(void) {
 	if((Surf_Wall = SDL_LoadBMP("wall.bmp")) == NULL) {
 		printf("error while loading BMP\n");
 	}
+	if((Surf_Gate = SDL_LoadBMP("gate.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+
+	if((Surf_Ghost1 = SDL_LoadBMP("ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey2 = SDL_MapRGB( Surf_Ghost1->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost1, SDL_SRCCOLORKEY, colorkey2);
+
+	if((Surf_Ghost2 = SDL_LoadBMP("ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey3 = SDL_MapRGB( Surf_Ghost2->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost2, SDL_SRCCOLORKEY, colorkey3);
+
+	if((Surf_Ghost3 = SDL_LoadBMP("ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey4 = SDL_MapRGB( Surf_Ghost3->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost3, SDL_SRCCOLORKEY, colorkey4);
+
+	if((Surf_Ghost4 = SDL_LoadBMP("ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey5 = SDL_MapRGB( Surf_Ghost4->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost4, SDL_SRCCOLORKEY, colorkey5);
 
 
 	if((Surf_Path = SDL_LoadBMP("path.bmp")) == NULL) {
@@ -387,6 +535,7 @@ int main(void) {
 	if((Surf_Highlight = SDL_LoadBMP("highlight.bmp")) == NULL) {
 		printf("error while loading BMP\n");
 	}
+
 
 	SDL_Event Event;
 
@@ -399,7 +548,9 @@ int main(void) {
 		SDL_FillRect(Surf_Display, NULL, 12852252);
 
 		doLogic();
-		goToPath();
+		walkinGhost();
+		goToPathMuffin();
+
 		initFields();
 		doGraphics();
 
