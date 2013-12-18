@@ -12,7 +12,8 @@ typedef enum FIELD_TYPE {
 
 	FIELD_WALL = 0,
 	FIELD_HIGHLIGHT = 1,
-	FIELD_PATH = 2
+	FIELD_PATH = 2,
+	FIELD_GATE = 3
 
 }fieldType_e;
 
