@@ -18,6 +18,8 @@ float accelerationX;
 float accelerationY;
 int speed;
 int size;
+int close_counter;
+
 
 } object_s;
 
