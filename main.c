@@ -205,26 +205,23 @@ void ghost1ToWally(int wallX, int wallY){
 
 }
 
-void goToPathx(int wallX, int wallY, float obj_accelx, float obj_posx){
+void goToPathx(int wallX, int wallY, object_s obj){
 
-	if(obj_accelx < 0){
-		obj_posx= map[wallX][wallY].x + muffin.size;
+	if(obj.accelerationX < 0){
+		obj.posX= map[wallX][wallY].x + muffin.size;
 	}
-	else if(obj_accelx > 0){
-		obj_posx = map[wallX][wallY].x - muffin.size;
+	else if(obj.accelerationX > 0){
+		obj.posX = map[wallX][wallY].x - muffin.size;
 	}
 }
 
+void goToPathy(int wallX, int wallY, object_s obj){
+	if(obj.accelerationY < 0){
 
-
-
-void goToPathy(int wallX, int wallY, float obj_accely, float obj_posy){
-	if(obj_accely < 0){
-
-		obj_posy = map[wallX][wallY].y + muffin.size;
+		obj.posY = map[wallX][wallY].y + muffin.size;
 	}
-	else if(obj_accely > 0){
-		obj_posy = map[wallX][wallY].y - muffin.size;
+	else if(obj.accelerationY > 0){
+		obj.posY = map[wallX][wallY].y - muffin.size;
 	}
 
 }
@@ -235,8 +232,8 @@ void goToPathMuffin(){
 		for(j = 0; j < MAP_H; j++){
 			if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				if (isObjectOnWall(i,j)){
-					goToPathx(i, j, muffin.accelerationX, muffin.posX);
-					goToPathy(i, j, muffin.accelerationX, muffin.posX);
+					goToPathx(i, j, muffin);
+					goToPathy(i, j, muffin);
 				}
 			}
 
