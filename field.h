@@ -25,7 +25,4 @@ int highlighted;
 
 } field_s;
 
-
-
-
 #endif /* FIELD_H_ */

@@ -71,39 +71,125 @@ int isTileOnTile(int x1, int y1, int x2, int y2, int size){
 	}
 	else return 0;
 }
-
-int isTileOnTile2(int x1, int y1, int x2, int y2, int size){
-
-	if (y1 == y2){
-
-		if (   (x1 <= x2)  &&  ( abs(x1 - x2) < size/2)   )  {
-
-			return 1;
+int Over_Edge(object_s *object, int tileX, int tileY, int size){
+	if (object->posY == tileY){
+			if(object->accelerationX > 0){
+				if (   (object->posX <= tileX)  &&  (( abs(object->posX - tileX) >= size/2) && (abs(object->posX - tileX) <= size))  )  {
+					return 1;
+				}
+			}
+			if(object->accelerationX < 0){
+				if ( (tileX <= object->posX) &&  (( abs(object->posX - tileX) >= size/2) && (abs(object->posX - tileX) <= size))  ) {
+					return 1;
+				}
+			}
+			else return 0;
 		}
-
-		else if ( (x2 <= x1) &&  ( abs(x1 - x2) < size/2)  ) {
-			return 1;
+		if (object->posX == tileX){
+			if(object->accelerationY > 0){
+				if (   (object->posY <= tileY)  &&  (( abs(object->posY - tileY) >= size/2) && (abs(object->posY - tileY) <= size))   )  {
+					return 1;
+				}
+			}
+			if(object->accelerationY < 0){
+				if ( (tileY <= object->posY) &&  (( abs(object->posY - tileY) >= size/2) && (abs(object->posY - tileY) <= size))  ) {
+					return 1;
+				}
+			}
+			return 0;
 		}
-
 		return 0;
-	}
-
-	else if (x1 == x2){
-
-		if (   (y1 <= y2)  &&  ( abs(y1 - y2) < size/2)   )  {
-
-			return 1;
-		}
-
-		else if ( (y2 <= y1) &&  ( abs(y1 - y2) < size/2)  ) {
-			return 1;
-		}
-
-		return 0;
-	}
-	else return 0;
+	////
+		if (object->posY == tileY){
+				if(object->accelerationX > 0){
+					if (   (object->posX <= tileX)  &&  (( abs(object->posX - tileX) < size/2) && (abs(object->posX - tileX) > 0))  )  {
+						return 1;
+					}
+				}
+				if(object->accelerationX < 0){
+					if ( (tileX <= object->posX) &&  (( abs(object->posX - tileX) < size/2) && (abs(object->posX - tileX) > 0))  ) {
+						return 1;
+					}
+				}
+				else return 0;
+			}
+			if (object->posX == tileX){
+				if(object->accelerationY > 0){
+					if (   (object->posY <= tileY)  &&  (( abs(object->posY - tileY) < size/2) && (abs(object->posY - tileY) > 0))   )  {
+						return 1;
+					}
+				}
+				if(object->accelerationY < 0){
+					if ( (tileY <= object->posY) &&  (( abs(object->posY - tileY) < size/2) && (abs(object->posY - tileY) > 0))  ) {
+						return 1;
+					}
+				}
+				return 0;
+			}
+			return 0;
 }
 
+int isObjectOverlapMapField(object_s *object, int tileX, int tileY, int size){
+
+	if (object->posY == tileY){
+		if(object->accelerationX > 0){
+			if (   (object->posX <= tileX)  &&  (( abs(object->posX - tileX) >= size/2) && (abs(object->posX - tileX) <= size))  )  {
+				return 1;
+			}
+		}
+		if(object->accelerationX < 0){
+			if ( (tileX <= object->posX) &&  (( abs(object->posX - tileX) >= size/2) && (abs(object->posX - tileX) <= size))  ) {
+				return 1;
+			}
+		}
+		else return 0;
+	}
+	if (object->posX == tileX){
+		if(object->accelerationY > 0){
+			if (   (object->posY <= tileY)  &&  (( abs(object->posY - tileY) >= size/2) && (abs(object->posY - tileY) <= size))   )  {
+				return 1;
+			}
+		}
+		if(object->accelerationY < 0){
+			if ( (tileY <= object->posY) &&  (( abs(object->posY - tileY) >= size/2) && (abs(object->posY - tileY) <= size))  ) {
+				return 1;
+			}
+		}
+		return 0;
+	}
+	return 0;
+}
+
+int isObjectOnTheEdgeOfMapField(object_s *object, int tileX, int tileY, int size){
+
+	if (object->posY == tileY){
+		if(object->accelerationX > 0){
+			if (   (object->posX <= tileX)  &&  (( abs(object->posX - tileX) < size/2) && (abs(object->posX - tileX) > 0))  )  {
+				return 1;
+			}
+		}
+		if(object->accelerationX < 0){
+			if ( (tileX <= object->posX) &&  (( abs(object->posX - tileX) < size/2) && (abs(object->posX - tileX) > 0))  ) {
+				return 1;
+			}
+		}
+		else return 0;
+	}
+	if (object->posX == tileX){
+		if(object->accelerationY > 0){
+			if (   (object->posY <= tileY)  &&  (( abs(object->posY - tileY) < size/2) && (abs(object->posY - tileY) > 0))   )  {
+				return 1;
+			}
+		}
+		if(object->accelerationY < 0){
+			if ( (tileY <= object->posY) &&  (( abs(object->posY - tileY) < size/2) && (abs(object->posY - tileY) > 0))  ) {
+				return 1;
+			}
+		}
+		return 0;
+	}
+	return 0;
+}
 
 void changeReleaseCounter( object_s *ghost1, object_s *ghost2){
 	if(ghost1->release_counter%11 == 0){
@@ -179,6 +265,7 @@ void goToPathx(int wallX, int wallY, object_s *obj){
 
 	if((obj->accelerationX) < 0){
 		obj->posX= map[wallX][wallY].x + TILE_SIZE;
+
 	}
 	else if(obj->accelerationX > 0){
 		obj->posX = map[wallX][wallY].x - TILE_SIZE;

@@ -10,19 +10,17 @@
 #include <stdlib.h>
 #include "field.h"
 #include "object.h"
-
-#include <SDL/SDL_image.h>
-#include <SDL/SDL.h>
+#include "keys.h"
 
 char running = 1;
-int release_counter = 1;
+
 int release_pos = 999;
+int acceleration_draw = 0;
 
 #define SCREEN_W 800
 #define SCREEN_H 600
 #define MAP_W 16
 #define MAP_H 12
-#define TILE_SIZE 50
 
 object_s muffin;
 object_s ghost1;
@@ -42,32 +40,109 @@ SDL_Surface* Surf_Ghost2;
 SDL_Surface* Surf_Ghost3;
 SDL_Surface* Surf_Ghost4;
 
+
+void printObjectProp(object_s *object){
+	printf("OBJ %f - posX, %f - posY, %f - accX, %f - accY\n", object->posX, object->posY, object->accelerationX, object->accelerationY );
+}
+
+void printFieldProp(int i, int j){
+	printf("FIELD: %d - map-i, %d - map-j, %d - map[i][j].x, %d - map[i][j].y, %d - fieldType\n", i, j, map[i][j].x, map[i][j].y, map[i][j].type);
+}
+void ChangeKeys(object_s *object){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if((object->accelerationX == 0) && (object->accelerationY > 0)){
+				if(isObjectOverlapMapField(object, map[i][j].x, map[i][j].y, TILE_SIZE)){
+					if(KeysOn[0] == 1){
+						printf("KeyD is on!\n");
+						if((object->posY + object->accelerationY*object->speed + (1.20)*TILE_SIZE) > map[i][j].y){
+							object->posY = map[i][j].y;
+							object->posX += object->accelerationY*object->speed;
+						}
+					}
+					if(KeysOn[1] == 1){
+						if((object->posY + object->accelerationY*object->speed + TILE_SIZE) > map[i][j].y){
+							object->posY = map[i][j].y;
+							object->posX -= object->accelerationY*object->speed;
+						}
+
+					}
+				}
+			}
+			if(object->accelerationY == 0){
+				if(isObjectOverlapMapField(object, map[i][j].x, map[i][j].y, TILE_SIZE)){
+					if(object->posX + TILE_SIZE == map[i][j].x*j){
+						KeysOn[2] = 1;
+						KeysOn[3] = 1;
+					}
+				}
+			}
+		}
+	}
+}
+
 void OnKeyDowndd(SDLKey sym) {
+
 	switch(sym) {
 
 	case (SDLK_d): {
-		muffin.accelerationX = 0.5;
+
+		KeysOn[0]=1;
+		muffin.accelerationX = 0.12;
 		muffin.accelerationY = 0;
+
 		break;
+
 	}
 	case (SDLK_a): {
-		muffin.accelerationX = -0.5;
+		KeysOn[1] = 1;
+		muffin.accelerationX = -0.12;
 		muffin.accelerationY = 0;
+
 		break;
 	}
 	case (SDLK_w): {
-		muffin.accelerationY = -0.5;
+		KeysOn[2]= 1;
+		muffin.accelerationY = -0.12;
 		muffin.accelerationX = 0;
+
 		break;
 	}
 	case (SDLK_s): {
-		muffin.accelerationY = 0.5;
+		KeysOn[3] = 1;
+		muffin.accelerationY = 0.12;
 		muffin.accelerationX = 0;
+
 		break;
 	}
 	default: {}
 	}
+}
 
+void OnKeyUp(SDLKey sym) {
+	switch(sym) {
+
+	case (SDLK_d): {
+
+		KeysOn[0]=0;
+		break;
+
+	}
+	case (SDLK_a): {
+		KeysOn[1] = 0;
+		break;
+	}
+	case (SDLK_w): {
+		KeysOn[2]= 0;
+		break;
+	}
+	case (SDLK_s): {
+		KeysOn[3] = 0;
+		break;
+	}
+	default: {}
+	}
 }
 
 void OnEvent(SDL_Event* Event) {
@@ -82,6 +157,7 @@ void OnEvent(SDL_Event* Event) {
 		break;
 	}
 	case(SDL_KEYUP): {
+		OnKeyUp(Event->key.keysym.sym);
 		break;
 	}
 	case(SDL_MOUSEBUTTONDOWN): {
@@ -105,122 +181,11 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 	return 0;
 }
 
-int isObjectOnTile (int objX, int objY, int tileX, int tileY){
-
-	if((objX == tileX*muffin.size) && (objY == tileY*muffin.size)){
-
-		return 1;
+void accelerationDraw(object_s *ghost){
+	if(acceleration_draw%2 == 0){
+		ghost->accelerationX = 0,25;
 	}
-	return 0;
-}
-
-int isTileOnTile(int x1, int y1, int x2, int y2, int size){
-
-	if((x1 == x2) && (y1==y2)){
-		return 1;
-	}
-	else if ( ( abs(y1 - y2) < size) && ( abs(x1 - x2) < size) ){
-		return 1;
-	}
-
-	else if (y1 == y2){
-
-		if (   (x1 <= x2)  &&  ( abs(x1 - x2) < size)   )  {
-
-			return 1;
-		}
-		else if ( (x1 <= x2)  && ( abs(x1 - x2) == 0 ) ) {
-
-			return 1;
-		}
-		else if ( (x2 <= x1) &&  ( abs(x1 - x2) < size)  ) {
-			return 1;
-		}
-		else if (((x2 <= x1)  &&  (abs(x1 - x2) == 0)) ){
-			return 1;
-		}
-		return 0;
-	}
-
-	if((x1 == x2) && (y1==y2)){
-		return 1;
-	}
-	else if (x1 == x2){
-
-		if (   (y1 <= y2)  &&  ( abs(y1 - y2) < size)   )  {
-
-			return 1;
-		}
-		else if ( (y1 <= y2)  && ( abs(y1 - y2) == 0 ) ) {
-
-			return 1;
-		}
-		else if ( (y2 <= y1) &&  ( abs(y1 - y2) < size)  ) {
-			return 1;
-		}
-		else if (((y2 <= y1)  &&  (abs(y1 - y2) == 0)) ){
-			return 1;
-		}
-		return 0;
-	}
-	else return 0;
-}
-
-int isObjectOnWall(int wallX, int wallY){
-
-	if(map[wallX][wallY].type == FIELD_WALL){
-		return 1;
-	}
-	else return 0;
-}
-
-int isObjectOnPath(int wallX, int wallY){
-
-	if(map[wallX][wallY].type == FIELD_PATH){
-		return 1;
-	}
-	else return 0;
-}
-
-void ghost1ToWallx(int wallX, int wallY, object_s *ghost1){
-	if(ghost1->accelerationX < 0){
-		ghost1->posX = map[wallX][wallY].x + TILE_SIZE;
-	}
-	else if(ghost1->accelerationX > 0){
-		ghost1->posX = map[wallX][wallY].x - TILE_SIZE;
-	}
-}
-
-void ghost1ToWally(int wallX, int wallY, object_s *ghost1){
-	if(ghost1->accelerationY < 0){
-
-		ghost1->posY = map[wallX][wallY].y + TILE_SIZE;
-	}
-	else if(ghost1->accelerationY > 0){
-		ghost1->posY = map[wallX][wallY].y - TILE_SIZE;
-	}
-
-}
-
-void goToPathx(int wallX, int wallY, object_s *obj){
-
-	if((obj->accelerationX) < 0){
-		obj->posX= map[wallX][wallY].x + TILE_SIZE;
-	}
-	else if(obj->accelerationX > 0){
-		obj->posX = map[wallX][wallY].x - TILE_SIZE;
-	}
-}
-
-void goToPathy(int wallX, int wallY, object_s *obj){
-	if(obj->accelerationY < 0){
-
-		obj->posY = map[wallX][wallY].y + TILE_SIZE;
-	}
-	else if(obj->accelerationY > 0){
-		obj->posY = map[wallX][wallY].y - TILE_SIZE;
-	}
-
+	else ghost->accelerationX = -0.12;
 }
 
 void goToPathMuffin(){
@@ -233,10 +198,10 @@ void goToPathMuffin(){
 					goToPathy(i, j, &muffin);
 				}
 			}
-
 		}
 	}
 }
+
 int isGhostInGate(int wallX, int wallY){
 
 	if(map[wallX][wallY].y == 3*TILE_SIZE){
@@ -245,338 +210,401 @@ int isGhostInGate(int wallX, int wallY){
 	else return 0;
 }
 
-void changeReleasePos (){
-	release_pos = 3*TILE_SIZE;
+void moveGhostInCage( object_s *ghost){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if(ghost->release_counter%11 == 0){
+				release_pos = 3*TILE_SIZE;
+				ghost->release_counter = 1;
+			}
+			if (isTileOnTile(ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if(isObjectOnPath(i, j)){
+					goToPathy(i, j, ghost);
+					ghost->accelerationY = -(ghost->accelerationY);
+					ghost->release_counter++;
+				}
+			}
+		}
+	}
 }
 
-void finallyReleaseTheGhost(object_s *ghost){
+void finallyReleaseTheGhost(object_s *ghost1){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if (isTileOnTile(ghost1->posX, ghost1->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if(isGhostInGate(i,j)){
+					if(release_pos == 3*TILE_SIZE){
+						release_pos = 999;
+						acceleration_draw++;
+						accelerationDraw(ghost1);     //losowany accX
+						ghost1->posY = j*TILE_SIZE;
+						ghost1->accelerationY = 0;
+						ghost1->release_moment = 0;
+						break;
+					}
+				}
+			}
+		}
+	}
+}
+
+void moveGhostOutOfCage(object_s *ghost){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			if (isObjectOverlapMapField( ghost,map[i][j].x, map[i][j].y, TILE_SIZE)){
+				//		printf(" %d - i, %d - j,%d - map[i][j].x, %d - map[i][j].y,  %f  - ghostX, %f - ghostY\n ",i,j,map[i][j].x, map[i][j].y, ghost->posX, ghost->posY);
+				if(isObjectOnGate(i,j)){
+					ghost->posX = map[i][j].x;
+					//ghostToPathy(i,j, ghost);
+					ghost->accelerationX = 0;
+					ghost->accelerationY = 0,25;
+					ghost->on_path_moment = 1;
+					ghost->release_moment = 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void GhostsLogic(){
+
+	moveGhostInCage(&ghost1);
+	finallyReleaseTheGhost(&ghost1);
+	if(ghost1.release_moment == 0){
+		moveGhostOutOfCage(&ghost1);
+	}
+	moveGhostInCage(&ghost2);
+	if(shouldReleaseGhost(&ghost2)){
+		finallyReleaseTheGhost(&ghost2);
+	}
+	if(ghost1.release_moment == 1){
+		moveGhostOutOfCage(&ghost2);
+	}
+
+	moveGhostInCage(&ghost3);
+	if(shouldReleaseGhost(&ghost3)){
+		finallyReleaseTheGhost(&ghost3);
+	}
+	moveGhostInCage(&ghost4);
+	if(shouldReleaseGhost(&ghost4)){
+		finallyReleaseTheGhost(&ghost4);
+	}
+	//printf("%d  %d  %d  %d\n", ghost1.release_counter, ghost2.release_counter, ghost3.release_counter, ghost4.release_counter);
+	ghost1.posY += ghost1.speed*ghost1.accelerationY;
+	ghost2.posY += ghost1.speed*ghost2.accelerationY;
+	ghost3.posY += ghost1.speed*ghost3.accelerationY;
+	ghost4.posY += ghost1.speed*ghost4.accelerationY;
+
+	ghost1.posX += ghost1.speed*ghost1.accelerationX;
+	ghost2.posX += ghost1.speed*ghost2.accelerationX;
+	ghost3.posX += ghost1.speed*ghost3.accelerationX;
+	ghost4.posX += ghost1.speed*ghost4.accelerationX;
+}
+/*
+void walkingGhostonPath(object_s *ghost){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
 			if (isTileOnTile(ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
-				if(isGhostInGate(i,j)){
-					if(release_pos == 3*TILE_SIZE){
-						ghost->posY = j*TILE_SIZE;
-						ghost->accelerationY = 0;
-						ghost->accelerationX = -0.5;
-					}
+
+
+				if (isGhostInGate2(i,j)){
+					ghostToPathx(i, j, ghost);
+					//	ghostToPathy(i, j, ghost);
 				}
 			}
 		}
 	}
 }
+ */
 
-void walkinGhostdown(){
+void doLogic() {
+
+	muffin.posX += muffin.speed*muffin.accelerationX;
+
+	if((muffin.posX < 0))
+	{
+		muffin.posX = 0;
+	}
+	else if ( muffin.posX > (SCREEN_W - muffin.size))
+	{
+		muffin.posX = SCREEN_W - muffin.size;
+	}
+
+	muffin.posY += muffin.speed*muffin.accelerationY;
+
+	if (muffin.posY < 0)
+	{
+		muffin.posY = 0;
+	}
+
+	else if (muffin.posY > (SCREEN_H - muffin.size))
+	{
+		muffin.posY = SCREEN_H - muffin.size;
+	}
+}
+
+void highlightTile2(int X, int Y){
+	map[X][Y].highlighted = 1;
+}
+
+void unhighlightTile2(int X, int Y){
+	map[X][Y].highlighted = 0;
+}
+
+void highlightMuffinTile(){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if(release_counter%11 == 0){
-				release_pos = 3*TILE_SIZE;
-				ghost1.accelerationY = -(ghost1.accelerationY);
-				ghost2.accelerationY = -(ghost2.accelerationY);
-				ghost3.accelerationY = -(ghost3.accelerationY);
-				ghost4.accelerationY = -(ghost4.accelerationY);
+			if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
+				highlightTile2(i, j);
 			}
+			else{
+				unhighlightTile2(i,j);
+			}
+		}
+	}
+}
 
-			if (isTileOnTile(ghost4.posX, ghost4.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+void initFields (){
 
-						if(isObjectOnPath(i, j)){
-						goToPathy(i, j, &ghost4);
-						ghost1.accelerationY = -(ghost1.accelerationY);
-						ghost2.accelerationY = -(ghost2.accelerationY);
-						ghost3.accelerationY = -(ghost3.accelerationY);
-						ghost4.accelerationY = -(ghost4.accelerationY);
-						release_counter++;
-					}
+	int i, j, k, l,m,n;
 
-					printf("%d\n", release_counter);
+	for(i = 0; i < MAP_W; i++) {
+		for(j = 0; j < MAP_H; j++) {
+			map[i][j].type = FIELD_WALL;
+			map[i][j].x = i*TILE_SIZE;
+			map[i][j].y = j*TILE_SIZE;
+		}
+	}
+
+	for(k = 1; k < MAP_H - 1; k++){
+		map[1][k].type = FIELD_PATH; // 1 i 14: kolumny
+		map[1][k].x = TILE_SIZE;
+		map[1][k].y = k*TILE_SIZE;
+		map[14][k].type = FIELD_PATH;
+		map[14][k].x = 14*TILE_SIZE;
+		map[14][k].y =k*TILE_SIZE;
+	}
+
+	for(l = 1; l < MAP_W - 2; l++){
+		map[l][1].type = FIELD_PATH;
+		map[l][1].x = l*TILE_SIZE;
+		map[l][1].y = TILE_SIZE;
+		map[l][5].type = FIELD_PATH;
+		map[l][5].x = l*TILE_SIZE;
+		map[l][5].y = 5*TILE_SIZE;
+		map[l][8].type = FIELD_PATH;
+		map[l][8].x = l*TILE_SIZE;
+		map[l][8].y = 8*TILE_SIZE;
+		map[l][10].type = FIELD_PATH;
+		map[l][10].x = l*TILE_SIZE;
+		map[l][10].y = 10*TILE_SIZE;
+	}
+	for(n = 1; n < 6; n++){
+		map[5][n].type = FIELD_PATH;
+		map[5][n].x = 5*TILE_SIZE;
+		map[5][n].y = n*TILE_SIZE;
+	}
+
+	for(m = 1; m < 6; m++){
+		map[10][m].type = FIELD_PATH;
+		map[10][m].x = 10*TILE_SIZE;
+		map[10][m].y = m*TILE_SIZE;
+	}
+	map[11][9].type = FIELD_PATH;
+	map[11][9].x = 11*TILE_SIZE;
+	map[11][9].y = 9*TILE_SIZE;
+	map[4][9].type = FIELD_PATH;
+	map[4][9].x = 4*TILE_SIZE;
+	map[4][9].y = 9*TILE_SIZE;
+
+	map[5][3].type = FIELD_GATE;
+	map[5][3].x = 5*TILE_SIZE;
+	map[5][3].y = 3*TILE_SIZE;
+
+	map[10][3].type = FIELD_GATE;
+	map[10][3].x = 10*TILE_SIZE;
+	map[10][3].y = 3*TILE_SIZE;
+
+}
+
+void doGraphics() {
+
+	highlightMuffinTile();
+
+	int a,b;
+	for(a = 0; a < MAP_W; a++) {
+		for(b = 0; b < MAP_H; b++) {
+
+
+			if(map[a][b].highlighted){
+				displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
+			}
+			else{
+
+				switch(map[a][b].type) {
+
+				case(FIELD_PATH): {
+					displaySurface(Surf_Display, Surf_Path, a*Surf_Path->w, b*Surf_Path->h);
+					break;
+				}
+				case(FIELD_WALL): {
+					displaySurface(Surf_Display, Surf_Wall, a*Surf_Wall->w, b*Surf_Wall->h);
+
+					break;
+				}
+				case(FIELD_GATE): {
+					displaySurface(Surf_Display, Surf_Gate, a*Surf_Gate->w, b*Surf_Gate->h);
+					break;
+				}
+
+				default:{}
+
 				}
 			}
-
-		}
-	}
-
-	void doLogic() {
-
-		muffin.posX += muffin.speed*muffin.accelerationX;
-		//
-		if(muffin.posY < 200){
-			ghost2.close_counter = 1;
-			ghost3.close_counter = 1;
-		}
-		if(muffin.posY < 100){
-			ghost4.close_counter = 1;
-		}
-		//
-		if((muffin.posX < 0))
-		{
-			muffin.posX = 0;
-		}
-		else if ( muffin.posX > (SCREEN_W - muffin.size))
-		{
-			muffin.posX = SCREEN_W - muffin.size;
-
-		}
-
-		muffin.posY += muffin.speed*muffin.accelerationY;
-
-		ghost1.posY += ghost1.speed*ghost1.accelerationY;
-		ghost2.posY += ghost1.speed*ghost2.accelerationY;
-		ghost3.posY += ghost1.speed*ghost3.accelerationY;
-		ghost4.posY += ghost1.speed*ghost4.accelerationY;
-
-		if (muffin.posY < 0)
-		{
-			muffin.posY = 0;
-		}
-
-		else if (muffin.posY > (SCREEN_H - muffin.size))
-		{
-			muffin.posY = SCREEN_H - muffin.size;
 		}
 
 	}
 
-	void highlightTile2(int X, int Y){
-		map[X][Y].highlighted = 1;
+	displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
+	displaySurface(Surf_Display, Surf_Ghost1, ghost1.posX, ghost1.posY);
+	displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
+	displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
+	displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
+
+}
+
+int main(void) {
+
+	muffin.size = 50;
+	muffin.speed = 2;
+	muffin.posX = 50;
+	muffin.posY = 50;
+
+	ghost1.posX = 300;
+	ghost1.posY = 100;
+	ghost2.posX = 350;
+	ghost2.posY = 100;
+	ghost3.posX = 400;
+	ghost3.posY = 100;
+	ghost4.posX = 450;
+	ghost4.posY = 100;
+
+	ghost1.accelerationX =0;
+	ghost1.accelerationY = 0.12;
+	ghost1.speed = 4;
+	ghost2.accelerationX = 0;
+	ghost2.accelerationY = 0.12;
+	ghost3.accelerationX = 0;
+	ghost3.accelerationY = 0.12;
+	ghost4.accelerationX = 0;
+	ghost4.accelerationY = 0.12;
+
+	ghost1.release_counter = 1;
+	ghost2.release_counter = 1;
+	ghost3.release_counter = 1;
+	ghost4.release_counter = 1;
+
+	ghost1.release_moment = 1;
+	ghost2.release_moment = 1;
+	ghost3.release_moment = 1;
+	ghost4.release_moment = 1;
+
+
+
+	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
+		return 0;
+	}
+	SDL_EnableKeyRepeat(20,1);
+
+	if((Surf_Display = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)) == NULL) {
+		return 0;
 	}
 
-	void unhighlightTile2(int X, int Y){
-		map[X][Y].highlighted = 0;
+	if((Surf_Pig = SDL_LoadBMP("images/piggy.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
 	}
+	Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
+	SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
 
-	void highlightMuffinTile(){
-		int i, j;
-		for(i = 0; i < MAP_W; i++){
-			for(j = 0; j < MAP_H; j++){
-				if(isObjectOnTile(muffin.posX, muffin.posY, i, j)){
-					highlightTile2(i, j);
-				}
-				else{
-					unhighlightTile2(i,j);
-				}
-			}
-		}
+	if((Surf_Wall = SDL_LoadBMP("images/wall.bmp")) == NULL) {
+		printf("error while loading BMP\n");
 	}
+	if((Surf_Gate = SDL_LoadBMP("images/gate.bmp")) == NULL) {
 
-	void initFields (){
-
-		int i, j, k, l,m,n;
-
-		for(i = 0; i < MAP_W; i++) {
-			for(j = 0; j < MAP_H; j++) {
-				map[i][j].type = FIELD_WALL;
-				map[i][j].x = i*TILE_SIZE;
-				map[i][j].y = j*TILE_SIZE;
-			}
-		}
-
-		for(k = 1; k < MAP_H - 1; k++){
-			map[1][k].type = FIELD_PATH; // 1 i 14: kolumny
-			map[1][k].x = TILE_SIZE;
-			map[1][k].y = TILE_SIZE;
-			map[14][k].type = FIELD_PATH;
-			map[14][k].x = 14*TILE_SIZE;
-			map[14][k].y =k*TILE_SIZE;
-		}
-
-		for(l = 1; l < MAP_W - 2; l++){
-			map[l][1].type = FIELD_PATH;
-			map[l][1].x = l*TILE_SIZE;
-			map[l][1].y = TILE_SIZE;
-			map[l][5].type = FIELD_PATH;
-			map[l][5].x = l*TILE_SIZE;
-			map[l][5].y = 5*TILE_SIZE;
-			map[l][8].type = FIELD_PATH;
-			map[l][8].x = l*TILE_SIZE;
-			map[l][8].y = 8*TILE_SIZE;
-			map[l][10].type = FIELD_PATH;
-
-			map[l][10].x = l*TILE_SIZE;
-			map[l][10].y = 10*TILE_SIZE;
-		}
-		for(n = 1; n < 6; n++){
-			map[5][n].type = FIELD_PATH;
-			map[5][n].x = 5*TILE_SIZE;
-			map[5][n].y = n*TILE_SIZE;
-		}
-
-		for(m = 1; m < 6; m++){
-			map[10][m].type = FIELD_PATH;
-			map[10][m].x = 10*TILE_SIZE;
-			map[10][m].y = m*TILE_SIZE;
-		}
-		map[11][9].type = FIELD_PATH;
-		map[11][9].x = 11*TILE_SIZE;
-		map[11][9].y = 9*TILE_SIZE;
-		map[4][9].type = FIELD_PATH;
-		map[4][9].x = 4*TILE_SIZE;
-		map[4][9].y = 8*TILE_SIZE;
-
-		map[5][3].type = FIELD_GATE;
-		map[5][3].x = 8*TILE_SIZE;
-		map[5][3].y = 3*TILE_SIZE;
-
-		map[10][3].type = FIELD_GATE;
-		map[10][3].x = 7*TILE_SIZE;
-		map[10][3].y = 3*TILE_SIZE;
+		printf("error while loading BMP\n");
 
 	}
 
-	void doGraphics() {
+	if((Surf_Ghost1 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
 
-		highlightMuffinTile();
-
-		int a,b;
-		for(a = 0; a < MAP_W; a++) {
-			for(b = 0; b < MAP_H; b++) {
-
-				if(map[a][b].highlighted){
-					displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
-				}
-				else{
-
-					switch(map[a][b].type) {
-
-					case(FIELD_PATH): {
-						displaySurface(Surf_Display, Surf_Path, a*Surf_Path->w, b*Surf_Path->h);
-						break;
-					}
-					case(FIELD_WALL): {
-						displaySurface(Surf_Display, Surf_Wall, a*Surf_Wall->w, b*Surf_Wall->h);
-
-						break;
-					}
-					case(FIELD_GATE): {
-						displaySurface(Surf_Display, Surf_Gate, a*Surf_Gate->w, b*Surf_Gate->h);
-						break;
-					}
-
-					default:{}
-
-					}
-				}
-			}
-
-		}
-
-		displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
-		displaySurface(Surf_Display, Surf_Ghost1, ghost1.posX, ghost1.posY);
-		displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
-		displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
-		displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
+		printf("error while loading BMP\n");
 
 	}
+	Uint32 colorkey2 = SDL_MapRGB( Surf_Ghost1->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost1, SDL_SRCCOLORKEY, colorkey2);
 
-	int main(void) {
+	if((Surf_Ghost2 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
 
-		muffin.size = 50;
-		muffin.speed = 10;
-		muffin.posX = 50;
-		muffin.posY = 50;
+		printf("error while loading BMP\n");
 
-		ghost1.posX = 300;
-		ghost1.posY = 100;
-		ghost2.posX = 350;
-		ghost2.posY = 100;
-		ghost3.posX = 400;
-		ghost3.posY = 100;
-		ghost4.posX = 450;
-		ghost4.posY = 100;
-
-		ghost1.accelerationX = 0.5;
-		ghost1.accelerationY = 0.5;
-		ghost1.speed = 12;
-		ghost2.accelerationX = 0.5;
-		ghost2.accelerationY = 0.5;
-		ghost3.accelerationX = 0.5;
-		ghost3.accelerationY = 0.5;
-		ghost4.accelerationX = 0.5;
-		ghost4.accelerationY = 0.5;
-
-		if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-			return 0;
-		}
-		SDL_EnableKeyRepeat(20,1);
-
-		if((Surf_Display = SDL_SetVideoMode(SCREEN_W, SCREEN_H, 32, SDL_HWSURFACE | SDL_DOUBLEBUF)) == NULL) {
-			return 0;
-		}
-
-		if((Surf_Pig = SDL_LoadBMP("piggy.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-		Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
-		SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
-
-		if((Surf_Wall = SDL_LoadBMP("wall.bmp")) == NULL) {
-			printf("error while loading BMP\n");
-		}
-		if((Surf_Gate = SDL_LoadBMP("gate.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-
-		if((Surf_Ghost1 = SDL_LoadBMP("ghost.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-		Uint32 colorkey2 = SDL_MapRGB( Surf_Ghost1->format, 255, 255, 255 );
-		SDL_SetColorKey(Surf_Ghost1, SDL_SRCCOLORKEY, colorkey2);
-
-		if((Surf_Ghost2 = SDL_LoadBMP("ghost.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-		Uint32 colorkey3 = SDL_MapRGB( Surf_Ghost2->format, 255, 255, 255 );
-		SDL_SetColorKey(Surf_Ghost2, SDL_SRCCOLORKEY, colorkey3);
-
-		if((Surf_Ghost3 = SDL_LoadBMP("ghost.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-		Uint32 colorkey4 = SDL_MapRGB( Surf_Ghost3->format, 255, 255, 255 );
-		SDL_SetColorKey(Surf_Ghost3, SDL_SRCCOLORKEY, colorkey4);
-
-		if((Surf_Ghost4 = SDL_LoadBMP("ghost.bmp")) == NULL) {
-
-			printf("error while loading BMP\n");
-
-		}
-		Uint32 colorkey5 = SDL_MapRGB( Surf_Ghost4->format, 255, 255, 255 );
-		SDL_SetColorKey(Surf_Ghost4, SDL_SRCCOLORKEY, colorkey5);
-
-
-		if((Surf_Path = SDL_LoadBMP("path.bmp")) == NULL) {
-			printf("error while loading BMP\n");
-		}
-
-		if((Surf_Highlight = SDL_LoadBMP("highlight.bmp")) == NULL) {
-			printf("error while loading BMP\n");
-		}
-
-		SDL_Event Event;
-
-		while(running) {
-
-			while(SDL_PollEvent(&Event)) {
-				OnEvent(&Event);
-			}
-
-			SDL_FillRect(Surf_Display, NULL, 12852252);
-			doLogic();
-			goToPathMuffin();
-			walkinGhostdown();
-			finallyReleaseTheGhost(&ghost1);
-			initFields();
-			doGraphics();
-
-			SDL_Flip(Surf_Display);
-		}
 	}
+	Uint32 colorkey3 = SDL_MapRGB( Surf_Ghost2->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost2, SDL_SRCCOLORKEY, colorkey3);
+
+	if((Surf_Ghost3 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey4 = SDL_MapRGB( Surf_Ghost3->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost3, SDL_SRCCOLORKEY, colorkey4);
+
+	if((Surf_Ghost4 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey5 = SDL_MapRGB( Surf_Ghost4->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_Ghost4, SDL_SRCCOLORKEY, colorkey5);
+
+
+	if((Surf_Path = SDL_LoadBMP("images/path.bmp")) == NULL) {
+		printf("error while loading BMP\n");
+	}
+
+	if((Surf_Highlight = SDL_LoadBMP("images/highlight.bmp")) == NULL) {
+		printf("error while loading BMP\n");
+	}
+
+	SDL_Event Event;
+
+	while(running) {
+
+		while(SDL_PollEvent(&Event)) {
+			OnEvent(&Event);
+		}
+
+		SDL_FillRect(Surf_Display, NULL, 12852252);
+
+
+		doLogic();
+		goToPathMuffin();
+		GhostsLogic();
+		initFields();
+		doGraphics();
+		//	printObjectProp(&muffin);
+		//	printFieldProp(5,3);
+		//	printFieldProp(4,3);
+		//	printFieldProp(1,3);
+		//	printer();
+		SDL_Flip(Surf_Display);
+	}
+}
