@@ -9,13 +9,21 @@
 #include <stdlib.h>
 
 typedef enum KeyOn{
-	rightD = 5,
+	rightD ,
 	leftA ,
 	upW,
 	downS,
 }Key;
 
-char KeysOn[4] = {rightD, leftA, upW, downS};
+typedef enum ACC_counter{
+	accD,
+	accA,
+	accW,
+	accS,
+	acc0
+
+}acc_enum;
+
 
 
 //void OnKeyDowndd(SDLKey sym);
