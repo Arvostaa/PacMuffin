@@ -27,7 +27,6 @@ typedef struct OBJECT_STRUCT {
 	int release_moment;
 	int on_path_moment;
 
-
 } object_s;
 
 typedef struct cookie{

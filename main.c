@@ -41,6 +41,7 @@ SDL_Surface* Surf_Ghost1;
 SDL_Surface* Surf_Ghost2;
 SDL_Surface* Surf_Ghost3;
 SDL_Surface* Surf_Ghost4;
+
 SDL_Surface* Surf_cookie1;
 
 char KeysOn[4] = {0,0,0,0};
@@ -473,6 +474,12 @@ void initFields (){
 	map[10][3].y = 3*TILE_SIZE;
 
 }
+void displaySurfaceCookies(cookie_s *cookie){
+	cookie_s *wsk = cookie;
+	while(wsk->next != NULL){
+	displaySurface(Surf_Display, Surf_cookie1, wsk->posX, wsk->posY);
+	}
+}
 
 void doGraphics() {
 
@@ -516,9 +523,10 @@ void doGraphics() {
 	displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
 	displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
 	displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
-	displaySurface(Surf_Display, Surf_cookie1, cookie1->posX, cookie1->posY);
-
+	displaySurfaceCookies(cookie1);
 }
+
+
 
 int main(void) {
 
