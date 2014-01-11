@@ -12,15 +12,15 @@
 #include "object.h"
 #include "keys.h"
 
-char running = 1;
-
 int release_pos = 999;
 int acceleration_draw = 0;
+int cookie_amount = 1;
+
+float newPosX;
+float newPosY;
 
 #define SCREEN_W 800
 #define SCREEN_H 600
-#define MAP_W 16
-#define MAP_H 12
 
 object_s muffin;
 object_s ghost1;
@@ -28,6 +28,8 @@ object_s ghost2;
 object_s ghost3;
 object_s ghost4;
 field_s map[16][12];
+
+cookie_s *cookie1;
 
 SDL_Surface* Surf_Display;
 SDL_Surface* Surf_Pig;
@@ -39,48 +41,13 @@ SDL_Surface* Surf_Ghost1;
 SDL_Surface* Surf_Ghost2;
 SDL_Surface* Surf_Ghost3;
 SDL_Surface* Surf_Ghost4;
+SDL_Surface* Surf_cookie1;
 
+char KeysOn[4] = {0,0,0,0};
+char accel[5] = {0, 0, 0, 0, 0};
 
-void printObjectProp(object_s *object){
-	printf("OBJ %f - posX, %f - posY, %f - accX, %f - accY\n", object->posX, object->posY, object->accelerationX, object->accelerationY );
-}
+char running = 1;
 
-void printFieldProp(int i, int j){
-	printf("FIELD: %d - map-i, %d - map-j, %d - map[i][j].x, %d - map[i][j].y, %d - fieldType\n", i, j, map[i][j].x, map[i][j].y, map[i][j].type);
-}
-void ChangeKeys(object_s *object){
-	int i, j;
-	for(i = 0; i < MAP_W; i++){
-		for(j = 0; j < MAP_H; j++){
-			if((object->accelerationX == 0) && (object->accelerationY > 0)){
-				if(isObjectOverlapMapField(object, map[i][j].x, map[i][j].y, TILE_SIZE)){
-					if(KeysOn[0] == 1){
-						printf("KeyD is on!\n");
-						if((object->posY + object->accelerationY*object->speed + (1.20)*TILE_SIZE) > map[i][j].y){
-							object->posY = map[i][j].y;
-							object->posX += object->accelerationY*object->speed;
-						}
-					}
-					if(KeysOn[1] == 1){
-						if((object->posY + object->accelerationY*object->speed + TILE_SIZE) > map[i][j].y){
-							object->posY = map[i][j].y;
-							object->posX -= object->accelerationY*object->speed;
-						}
-
-					}
-				}
-			}
-			if(object->accelerationY == 0){
-				if(isObjectOverlapMapField(object, map[i][j].x, map[i][j].y, TILE_SIZE)){
-					if(object->posX + TILE_SIZE == map[i][j].x*j){
-						KeysOn[2] = 1;
-						KeysOn[3] = 1;
-					}
-				}
-			}
-		}
-	}
-}
 
 void OnKeyDowndd(SDLKey sym) {
 
@@ -89,31 +56,35 @@ void OnKeyDowndd(SDLKey sym) {
 	case (SDLK_d): {
 
 		KeysOn[0]=1;
-		muffin.accelerationX = 0.12;
-		muffin.accelerationY = 0;
-
+		accel[accD] = 1;
+		accel[accA] = 0;
+		muffin.accelerationX = OBJECT_ACC;
+		//	muffin.accelerationY = 0;
 		break;
 
 	}
 	case (SDLK_a): {
 		KeysOn[1] = 1;
-		muffin.accelerationX = -0.12;
-		muffin.accelerationY = 0;
-
+		accel[accA] = 1;
+		accel[accD] = 0;
+		muffin.accelerationX = -OBJECT_ACC;
+		//	muffin.accelerationY = 0;
 		break;
 	}
 	case (SDLK_w): {
 		KeysOn[2]= 1;
-		muffin.accelerationY = -0.12;
-		muffin.accelerationX = 0;
-
+		accel[accW] = 1;
+		accel[accS] = 0;
+		muffin.accelerationY = -OBJECT_ACC;
+		//	muffin.accelerationX = 0;
 		break;
 	}
 	case (SDLK_s): {
 		KeysOn[3] = 1;
-		muffin.accelerationY = 0.12;
-		muffin.accelerationX = 0;
-
+		accel[accS] = 1;
+		accel[accW] = 0;
+		muffin.accelerationY = OBJECT_ACC;
+		//	muffin.accelerationX = 0;
 		break;
 	}
 	default: {}
@@ -124,8 +95,8 @@ void OnKeyUp(SDLKey sym) {
 	switch(sym) {
 
 	case (SDLK_d): {
-
 		KeysOn[0]=0;
+
 		break;
 
 	}
@@ -166,6 +137,15 @@ void OnEvent(SDL_Event* Event) {
 	}
 }
 
+void printObjectProp(object_s *object){
+	printf("OBJ %f - posX, %f - posY, %f - accX, %f - accY\n", object->posX, object->posY, object->accelerationX, object->accelerationY );
+}
+
+void printFieldProp(int i, int j){
+	printf("FIELD: %d - map-i, %d - map-j, %d - map[i][j].x, %d - map[i][j].y, %d - fieldType\n", i, j, map[i][j].x, map[i][j].y, map[i][j].type);
+}
+
+
 int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) {
 	if(Surf_Dest == NULL || Surf_Src == NULL) {
 		return 0;
@@ -185,22 +165,43 @@ void accelerationDraw(object_s *ghost){
 	if(acceleration_draw%2 == 0){
 		ghost->accelerationX = 0,25;
 	}
-	else ghost->accelerationX = -0.12;
+	else ghost->accelerationX = -OBJECT_ACC;
 }
-
+/*
 void goToPathMuffin(){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
+
 			if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
-				if (isObjectOnWall(i,j)){
-					goToPathx(i, j, &muffin);
-					goToPathy(i, j, &muffin);
+				if (isMapWall(i,j)){
+					goToPathx(i, j, &muffin, accel);
+					goToPathy(i, j, &muffin, accel);
 				}
 			}
 		}
 	}
 }
+*/
+void goToPathMuffin2(){
+	int i, j;
+	for(i = 0; i < MAP_W; i++){
+		for(j = 0; j < MAP_H; j++){
+			ObjectOverlapWallH_R(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallH_L(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallV_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallV_U(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallH1of2R_U_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallH1of2L_U_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallV1of2U_L_R(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallV1of2D_R_L(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+		//printf("V-1of2-U   %d - map i, %d - map j, %f- muff.posXm %f - muff.posY, %d - mapX, %d - mapY \n", mapX/size, mapY/size, obj->posX, obj->posY, mapX, mapY);	ObjectOverlapWallV1of2D_R_L(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+
+
+		}
+	}
+}
+
 
 int isGhostInGate(int wallX, int wallY){
 
@@ -220,7 +221,7 @@ void moveGhostInCage( object_s *ghost){
 			}
 			if (isTileOnTile(ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				if(isObjectOnPath(i, j)){
-					goToPathy(i, j, ghost);
+					goToPathy(i, j, ghost, accel);
 					ghost->accelerationY = -(ghost->accelerationY);
 					ghost->release_counter++;
 				}
@@ -254,7 +255,7 @@ void moveGhostOutOfCage(object_s *ghost){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if (isObjectOverlapMapField( ghost,map[i][j].x, map[i][j].y, TILE_SIZE)){
+			if (isTileOnTile( ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				//		printf(" %d - i, %d - j,%d - map[i][j].x, %d - map[i][j].y,  %f  - ghostX, %f - ghostY\n ",i,j,map[i][j].x, map[i][j].y, ghost->posX, ghost->posY);
 				if(isObjectOnGate(i,j)){
 					ghost->posX = map[i][j].x;
@@ -305,26 +306,60 @@ void GhostsLogic(){
 	ghost4.posX += ghost1.speed*ghost4.accelerationX;
 }
 /*
-void walkingGhostonPath(object_s *ghost){
+void ChangeDirection(object_s *object){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if (isTileOnTile(ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+			if((object->accelerationX == 0) && (object->accelerationY > 0)){
+				if(isTileOnTile(object->posX, object->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 
+					if(abs(object->posY - map[i][j].y + TILE_SIZE < 2*TILE_SIZE)){
+						printf("mniejszy niz 2tilesize\n");
+						if(KeysOn[leftA] == 1 || KeysOn[rightD] == 1) {
+							printf("KeyD/A is on!\n");
+							{
+								if(newPosY > map[i][j].y){
 
-				if (isGhostInGate2(i,j)){
-					ghostToPathx(i, j, ghost);
-					//	ghostToPathy(i, j, ghost);
+									object->posY = map[i][j].y;
+									object->posX += object->accelerationY*object->speed;
+								}
+							}
+						}
+
+					}
 				}
 			}
+
 		}
 	}
 }
- */
-
+*/
 void doLogic() {
+/*
+	newPosX = muffin.posX + muffin.speed*muffin.accelerationX;
+	newPosY = muffin.posY + muffin.speed*muffin.accelerationY;
+
+	//ChangeDirection(&muffin);
 
 	muffin.posX += muffin.speed*muffin.accelerationX;
+*/
+
+
+	/*
+	 * if(GRANICA_PRZEKROCZONA){
+	 * if(PRZYCISK_HORYZONTALNY){
+	 * if(MOZLIWE PRZEJSCIE HORYZONTALNE){
+	 * wyrownaj Y do srodka;
+	 * pozostala wartosc do X;
+	 * }
+	 * }
+	 * }
+	 *
+	 * OBLICZENIA GRANICY WERTYKALNEJ
+	 * GRANICA PRZEKROCZONA?
+	 * TAK: {SPRAWDZ PRZYCISK HORYZONTALNY
+	 * NIE: muffin.posy += muffin.speed*muffin.accelerationY;
+	 */
 
 	if((muffin.posX < 0))
 	{
@@ -346,6 +381,12 @@ void doLogic() {
 	{
 		muffin.posY = SCREEN_H - muffin.size;
 	}
+	goToPathMuffin2();
+	//goToPathMuffin2y();
+
+	//goToPathMuffin2x();
+
+	//printf("%f - accX, %f -accY, %d - accD, %d -accA, %d - accW, %d - accS\n", muffin.accelerationX, muffin.accelerationY, accel[accD], accel[accA], accel[accW], accel[accS]);
 }
 
 void highlightTile2(int X, int Y){
@@ -441,7 +482,6 @@ void doGraphics() {
 	for(a = 0; a < MAP_W; a++) {
 		for(b = 0; b < MAP_H; b++) {
 
-
 			if(map[a][b].highlighted){
 				displaySurface(Surf_Display, Surf_Highlight, a*Surf_Highlight->w, b*Surf_Highlight->h);
 			}
@@ -476,6 +516,7 @@ void doGraphics() {
 	displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
 	displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
 	displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
+	displaySurface(Surf_Display, Surf_cookie1, cookie1->posX, cookie1->posY);
 
 }
 
@@ -495,15 +536,15 @@ int main(void) {
 	ghost4.posX = 450;
 	ghost4.posY = 100;
 
-	ghost1.accelerationX =0;
-	ghost1.accelerationY = 0.12;
+	ghost1.accelerationX = 0;
+	ghost1.accelerationY = OBJECT_ACC;
 	ghost1.speed = 4;
 	ghost2.accelerationX = 0;
-	ghost2.accelerationY = 0.12;
+	ghost2.accelerationY = OBJECT_ACC;
 	ghost3.accelerationX = 0;
-	ghost3.accelerationY = 0.12;
+	ghost3.accelerationY = OBJECT_ACC;
 	ghost4.accelerationX = 0;
-	ghost4.accelerationY = 0.12;
+	ghost4.accelerationY = OBJECT_ACC;
 
 	ghost1.release_counter = 1;
 	ghost2.release_counter = 1;
@@ -515,6 +556,14 @@ int main(void) {
 	ghost3.release_moment = 1;
 	ghost4.release_moment = 1;
 
+	cookie1->posX = 100;
+	cookie1->posY = 400;
+	initFields();
+
+	cookie1 = malloc(sizeof(cookie_s));
+
+	cookie1->next = NULL;
+	cookie1->cookie_counter = cookie_amount;
 
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -531,8 +580,10 @@ int main(void) {
 		printf("error while loading BMP\n");
 
 	}
-	Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
-	SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
+//	Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
+//	SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
+
+
 
 	if((Surf_Wall = SDL_LoadBMP("images/wall.bmp")) == NULL) {
 		printf("error while loading BMP\n");
@@ -584,6 +635,14 @@ int main(void) {
 		printf("error while loading BMP\n");
 	}
 
+	if((Surf_cookie1 = SDL_LoadBMP("images/cookie.bmp")) == NULL) {
+
+				printf("error while loading BMP\n");
+
+			}
+		Uint32 colorkey9 = SDL_MapRGB( Surf_cookie1->format, 255, 255, 255 ); ///sth wrong :<
+		SDL_SetColorKey(Surf_cookie1, SDL_SRCCOLORKEY, colorkey9);
+
 	SDL_Event Event;
 
 	while(running) {
@@ -594,11 +653,8 @@ int main(void) {
 
 		SDL_FillRect(Surf_Display, NULL, 12852252);
 
-
 		doLogic();
-		goToPathMuffin();
 		GhostsLogic();
-		initFields();
 		doGraphics();
 		//	printObjectProp(&muffin);
 		//	printFieldProp(5,3);
