@@ -538,17 +538,13 @@ int main(void) {
 	ghost3.release_moment = 1;
 	ghost4.release_moment = 1;
 
-
 	initFields();
 
 	cookieList = malloc(sizeof(cookie_s));
 
 	cookieList->next = NULL;
 	cookieList->posX = 100;
-	cookieList->posY = 400;
-
-	//insertCookie(cookieList, cookie_amount);
-
+	cookieList->posY = 500;
 
 	if(SDL_Init(SDL_INIT_EVERYTHING) < 0) {
 		return 0;
@@ -642,9 +638,11 @@ int main(void) {
 		doGraphics();
 
 		if(cookie_amount <= 4){
-
+			deleteCookie(cookieList, &muffin, TILE_SIZE);
+			deleteFirstCookie(&cookieList, &muffin, TILE_SIZE);
 			addCookies(cookieList, &cookie_delay, cookie_amount);
 			cookie_delay++;
+
 		}
 		//r	printf("%d\n", cookie_delay);
 		//drawCookiePosition(0,0);

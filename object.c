@@ -49,23 +49,37 @@ int drawCookieX(int amount){
 }
 
 /* - 4 funkcje: 2 wertykalnie, 2 horyzontalnie
- *
-
-void isMuffinOnCookie(object_s *muffin, int *cookieX, int *cookieY, int size){
-	if(muffin->posX + size > cookieX + size/5 && muffin->posY + size < cookieX + size/2){
-		if(muffin->posY + size < cookieX + size/2 && muffin->posX + size > cookieX + size/5 && muffin->posX + size < cookieX + size/2)
-	}
-
-	void deleteCookie( cookie_s *cookieList){
-	cookie_s *wsk,
-	wsk = cookieList;
-	while(wsk->ne)
-
-
-}
-
-}
  */
+
+int isMuffinOnCookieH_R(object_s *muffin, int *cookieX, int *cookieY, int size){
+	if(muffin->posX < *cookieX && muffin->posY == *cookieY && abs(muffin->posX - *cookieX) > 0.70*size && abs(muffin->posX - *cookieX) < size){
+		return 1;
+	}
+	else return 0;
+}
+
+int isMuffinOnCookieH_L(object_s *muffin, int *cookieX, int *cookieY, int size){
+	if(muffin->posX > *cookieX && muffin->posY == *cookieY && abs(muffin->posX - *cookieX) > 0.70*size && abs(muffin->posX - *cookieX) < size){
+		return 1;
+	}
+	else return 0;
+}
+
+
+int isMuffinOnCookieV_D(object_s *muffin, int *cookieX, int *cookieY, int size){
+	if(muffin->posY < *cookieY && muffin->posX == *cookieX && abs(muffin->posY - *cookieY) > 0.70*size && abs(muffin->posY - *cookieY) < size){
+		return 1;
+	}
+	else return 0;
+}
+
+int isMuffinOnCookieV_U(object_s *muffin, int *cookieX, int *cookieY, int size){
+	if(muffin->posY > *cookieY && muffin->posX == *cookieX && abs(muffin->posY - *cookieY) > 0.70*size && abs(muffin->posY - *cookieY) < size){
+		return 1;
+	}
+	else return 0;
+}
+
 int drawCookieY(int amount){
 	srand(time(NULL));
 
@@ -119,11 +133,64 @@ void insertCookie(cookie_s *cookieList, int cookie_amount){
 	//drawCookiePosition(&(new->posX), &(new->posY));
 	setCookiePosition(cookieList,&(new->posX), &(new->posY));
 
+
 }
 
+int isMuffinOnCookie(object_s *muffin, int *cookieX, int *cookieY, int size){
+
+	if(isMuffinOnCookieH_R(muffin, cookieX, cookieY, size)){
+		return 1;
+	}
+	if(isMuffinOnCookieH_L(muffin, cookieX, cookieY, size)){
+		return 1;
+	}
+	if(isMuffinOnCookieV_D(muffin, cookieX, cookieY, size)){
+			return 1;
+		}
+	if(isMuffinOnCookieV_U(muffin, cookieX, cookieY, size)){
+				return 1;
+			}
+	else return 0;
+}
+
+void deleteCookie(cookie_s *cookieList,object_s *muffin, int size){
+
+	cookie_s *wsk = cookieList;
+	while(wsk->next != NULL){
+		if(isMuffinOnCookie(muffin, &(wsk->next->posX), &(wsk->next->posY), size)){
+			cookie_s *deleted = wsk->next;
+			wsk->next = deleted->next;
+			free(deleted);
+		}
+		else{
+			wsk = wsk->next;
+		}
+	}
+}
+
+void deleteFirstCookie(cookie_s **cookieList, object_s *muffin, int size){
+	cookie_s *deleteFirst = *cookieList;
+	if(deleteFirst != NULL){
+		if(isMuffinOnCookie(muffin, &(deleteFirst->posX), &(deleteFirst->posY), size)){
+		*cookieList = deleteFirst->next;
+		free(deleteFirst);
+
+	}
+}
+}
+/*
+void deleteCookie2(cookie_s *cookieList, object_s *muffin, int size){
+	cookie_s *wsk = cookieList;
+	while(wsk->next != NULL){
+		if(){
+			deleteCookie(cookieList, muffin, &(wsk->posX), &(wsk->posY), size);
+		}
+	}
+}
+*/
 void addCookies(cookie_s *cookieList,int *cookie_delay, int cookie_amount)
 {
-	if(*cookie_delay%1500 == 0){
+	if(*cookie_delay%400 == 0){
 		insertCookie(cookieList, cookie_amount);
 		cookie_delay = 0;
 	}
@@ -132,6 +199,10 @@ void addCookies(cookie_s *cookieList,int *cookie_delay, int cookie_amount)
 	cookie_amount++;
 
 }
+
+
+
+
 // POJEDYŃCZE FUNKCJE-KURDUPLE, KTÓRE ZŁOŻĄ SIĘ NA FUNKCJĘ WIĘKSZĄ
 //1 - na przyciski
 
@@ -327,11 +398,11 @@ void ObjectTurnsRight(object_s *obj, int mapX, int mapY, int size, char *accelTa
 		if(accelTab[accD] == 1){
 			if(obj->posX == mapX){
 
-			obj->accelerationY = 0;
-			obj->accelerationX = OBJECT_ACC;
+				obj->accelerationY = 0;
+				obj->accelerationX = OBJECT_ACC;
+			}
 		}
 	}
-}
 }
 
 //////////
@@ -429,6 +500,57 @@ int isObjectOnTile (int objX, int objY, int tileX, int tileY){
 	return 0;
 }
 
+int isTileOnTile(int x1, int y1, int x2, int y2, int size){
+
+	if((x1 == x2) && (y1==y2)){
+		return 1;
+	}
+	else if ( ( abs(y1 - y2) < size) && ( abs(x1 - x2) < size) ){
+		return 1;
+	}
+
+	else if (y1 == y2){
+
+		if (   (x1 <= x2)  &&  ( abs(x1 - x2) < size)   )  {
+
+			return 1;
+		}
+		else if ( (x1 <= x2)  && ( abs(x1 - x2) == 0 ) ) {
+
+			return 1;
+		}
+		else if ( (x2 <= x1) &&  ( abs(x1 - x2) < size)  ) {
+			return 1;
+		}
+		else if (((x2 <= x1)  &&  (abs(x1 - x2) == 0)) ){
+			return 1;
+		}
+		return 0;
+	}
+
+	else if (x1 == x2){
+
+		if (   (y1 <= y2)  &&  ( abs(y1 - y2) < size)   )  {
+
+			return 1;
+		}
+		else if ( (y1 <= y2)  && ( abs(y1 - y2) == 0 ) ) {
+
+			return 1;
+		}
+		else if ( (y2 <= y1) &&  ( abs(y1 - y2) < size)  ) {
+			return 1;
+		}
+		else if (((y2 <= y1)  &&  (abs(y1 - y2) == 0)) ){
+			return 1;
+		}
+		return 0;
+	}
+	else return 0;
+
+
+
+}
 
 void changeReleaseCounter( object_s *ghost1, object_s *ghost2){
 	if(ghost1->release_counter%11 == 0){

@@ -86,6 +86,13 @@ void ObjectTurnsRight(object_s *obj, int mapX, int mapY, int size, char *accelTa
 
 void directObjectToPath(object_s *obj, int mapX, int mapY, int size, char *accelTab);
 
+int isMuffinOnCookieH_R(object_s *muffin, int *cookieX, int *cookieY, int size);
+int isMuffinOnCookieH_L(object_s *muffin, int *cookieX, int *cookieY, int size);
+int isMuffinOnCookieV_D(object_s *muffin, int *cookieX, int *cookieY, int size);
+int isMuffinOnCookieV_U(object_s *muffin, int *cookieX, int *cookieY, int size);
+int isMuffinOnCookie(object_s *muffin, int *cookieX, int *cookieY, int size);
+void deleteCookie(cookie_s *cookieList,object_s *muffin, int size);
+void deleteFirstCookie(cookie_s **cookieList, object_s *muffin, int size);
 
 
 #endif /* OBJECT_H_ */
