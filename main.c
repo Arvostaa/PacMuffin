@@ -22,6 +22,8 @@ int cookie_delay = 1;
 float newPosX;
 float newPosY;
 
+int deadMuffin = 0;
+
 #define SCREEN_W 800
 #define SCREEN_H 600
 
@@ -165,6 +167,8 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 	DestR.y = Y;
 
 	SDL_BlitSurface(Surf_Src, NULL, Surf_Dest, &DestR);//
+
+
 
 	return 0;
 }
@@ -581,25 +585,22 @@ int main(void) {
 	}
 
 
-	if(IsMuffinOnFork(&muffin, &fork1, TILE_SIZE)){
-		printf("vsdaGhfds\n\n\n");
+
 		if((Surf_Muffin = SDL_LoadBMP("images/dead_piggy.bmp")) == NULL) {
 
 			printf("error while loading BMP\n");
 
 		}
 
-	}
 
 
-	if((Surf_Muffin = SDL_LoadBMP("images/dead_piggy.bmp")) == NULL) {
+
+	if((Surf_DeadMuffin = SDL_LoadBMP("images/dead_muffin.bmp")) == NULL) {
+		deadMuffin = 1;
 
 		printf("error while loading BMP\n");
 
 	}
-
-
-
 
 	if((Surf_Muffin = SDL_LoadBMP("images/piggy.bmp")) == NULL) {
 
@@ -675,6 +676,7 @@ int main(void) {
 
 		while(SDL_PollEvent(&Event)) {
 			OnEvent(&Event);
+
 		}
 
 		SDL_FillRect(Surf_Display, NULL, 12852252);
@@ -684,9 +686,14 @@ int main(void) {
 		doGraphics();
 
 		if(IsMuffinOnFork(&muffin, &fork1, TILE_SIZE)){
-			muffin.accelerationX = 0;
-			muffin.accelerationY = 0;
-		}
+							muffin.accelerationX = 0;
+							muffin.accelerationY = 0;
+							deadMuffin = 1;
+						}
+
+if(deadMuffin){
+	printf("gbfdsadgeb vfvffdvdffvfefdvdefvf\n\n\n\n\n");
+}
 
 		if(cookie_amount <= 4){
 			deleteCookie(cookieList, &muffin, TILE_SIZE);
@@ -695,13 +702,11 @@ int main(void) {
 			cookie_delay++;
 
 		}
-		//r        printf("%d\n", cookie_delay);
-		//drawCookiePosition(0,0);
-		//        printObjectProp(&m;uffin);
-		//        printFieldProp(5,3);
-		//        printFieldProp(4,3);
-		//        printFieldProp(1,3);
-		//        printer();
+
 		SDL_Flip(Surf_Display);
+
+		}
+	if(deadMuffin){
+				SDL_Quit();
 	}
 }
