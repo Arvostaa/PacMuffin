@@ -1,9 +1,9 @@
 /*
- ============================================================================
- Name        : PacMUFFIN
- Author      :AnnSko
- Version     :0.1
- ============================================================================
+============================================================================
+Name : PacMUFFIN
+Author :AnnSko
+Version :0.1
+============================================================================
  */
 
 #include <stdio.h>
@@ -26,24 +26,25 @@ float newPosY;
 #define SCREEN_H 600
 
 object_s muffin;
-object_s ghost1;
-object_s ghost2;
-object_s ghost3;
-object_s ghost4;
+object_s fork1;
+object_s fork2;
+object_s fork3;
+object_s fork4;
 field_s map[16][12];
 
 cookie_s *cookieList;
 
 SDL_Surface* Surf_Display;
-SDL_Surface* Surf_Pig;
+SDL_Surface* Surf_Muffin;
+SDL_Surface* Surf_DeadMuffin;
 SDL_Surface* Surf_Path;
 SDL_Surface* Surf_Wall;
 SDL_Surface* Surf_Gate;
 SDL_Surface* Surf_Highlight;
-SDL_Surface* Surf_Ghost1;
-SDL_Surface* Surf_Ghost2;
-SDL_Surface* Surf_Ghost3;
-SDL_Surface* Surf_Ghost4; //zmien jak dla walla
+SDL_Surface* Surf_fork;
+//SDL_Surface* Surf_fork2;
+//SDL_Surface* Surf_fork3;
+//SDL_Surface* Surf_fork4; //zmien jak dla walla
 
 SDL_Surface* Surf_cookieList;
 
@@ -63,7 +64,7 @@ void OnKeyDowndd(SDLKey sym) {
 		accel[accA] = 0;
 
 		muffin.accelerationX = OBJECT_ACC;
-		//	muffin.accelerationY = 0;
+		//        muffin.accelerationY = 0;
 		break;
 
 	}
@@ -73,7 +74,7 @@ void OnKeyDowndd(SDLKey sym) {
 		accel[accD] = 0;
 
 		muffin.accelerationX = -OBJECT_ACC;
-		//	muffin.accelerationY = 0;
+		//        muffin.accelerationY = 0;
 		break;
 	}
 	case (SDLK_w): {
@@ -82,7 +83,7 @@ void OnKeyDowndd(SDLKey sym) {
 		accel[accW] = 1;
 		accel[accS] = 0;
 		muffin.accelerationY = -OBJECT_ACC;
-		//	muffin.accelerationX = 0;
+		//        muffin.accelerationX = 0;
 		break;
 	}
 	case (SDLK_s): {
@@ -91,7 +92,7 @@ void OnKeyDowndd(SDLKey sym) {
 		accel[accS] = 1;
 		accel[accW] = 0;
 		muffin.accelerationY = OBJECT_ACC;
-		//	muffin.accelerationX = 0;
+		//        muffin.accelerationX = 0;
 		break;
 	}
 	default: {}
@@ -168,26 +169,26 @@ int displaySurface(SDL_Surface* Surf_Dest, SDL_Surface* Surf_Src, int X, int Y) 
 	return 0;
 }
 
-void accelerationDraw(object_s *ghost){
+void accelerationDraw(object_s *fork){
 	if(acceleration_draw%2 == 0){
-		ghost->accelerationX = 0,25;
+		fork->accelerationX = 0,25;
 	}
-	else ghost->accelerationX = -OBJECT_ACC;
+	else fork->accelerationX = -OBJECT_ACC;
 }
 /*
 void goToPathMuffin(){
-	int i, j;
-	for(i = 0; i < MAP_W; i++){
-		for(j = 0; j < MAP_H; j++){
+        int i, j;
+        for(i = 0; i < MAP_W; i++){
+                for(j = 0; j < MAP_H; j++){
 
-			if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
-				if (isMapWall(i,j)){
-					goToPathx(i, j, &muffin, accel);
-					goToPathy(i, j, &muffin, accel);
-				}
-			}
-		}
-	}
+                        if (isTileOnTile(muffin.posX, muffin.posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+                                if (isMapWall(i,j)){
+                                        goToPathx(i, j, &muffin, accel);
+                                        goToPathy(i, j, &muffin, accel);
+                                }
+                        }
+                }
+        }
 }
  */
 void goToPathMuffin2(){
@@ -198,7 +199,7 @@ void goToPathMuffin2(){
 			ObjectOverlapWallH_L(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
 			ObjectOverlapWallV_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
 			ObjectOverlapWallV_U(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
-		ObjectOverlapWallH1of2R_U_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
+			ObjectOverlapWallH1of2R_U_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
 			ObjectOverlapWallH1of2L_U_D(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
 			ObjectOverlapWallV1of2U_L_R(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
 			ObjectOverlapWallV1of2D_R_L(&muffin, map[i][j].x, map[i][j].y, TILE_SIZE, accel);
@@ -210,7 +211,7 @@ void goToPathMuffin2(){
 	}
 }
 
-int isGhostInGate(int wallX, int wallY){
+int isforkInGate(int wallX, int wallY){
 
 	if(map[wallX][wallY].y == 3*TILE_SIZE){
 		return 1;
@@ -218,38 +219,38 @@ int isGhostInGate(int wallX, int wallY){
 	else return 0;
 }
 
-void moveGhostInCage( object_s *ghost){
+void moveforkInCage( object_s *fork){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if(ghost->release_counter%11 == 0){
+			if(fork->release_counter%11 == 0){
 				release_pos = 3*TILE_SIZE;
-				ghost->release_counter = 1;
+				fork->release_counter = 1;
 			}
-			if (isTileOnTile(ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+			if (isTileOnTile(fork->posX, fork->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
 				if(isObjectOnPath(i, j)){
-					goToPathy(i, j, ghost, accel);
-					ghost->accelerationY = -(ghost->accelerationY);
-					ghost->release_counter++;
+					goToPathy(i, j, fork, accel);
+					fork->accelerationY = -(fork->accelerationY);
+					fork->release_counter++;
 				}
 			}
 		}
 	}
 }
 
-void finallyReleaseTheGhost(object_s *ghost1){
+void finallyReleaseThefork(object_s *fork1){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if (isTileOnTile(ghost1->posX, ghost1->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
-				if(isGhostInGate(i,j)){
+			if (isTileOnTile(fork1->posX, fork1->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				if(isforkInGate(i,j)){
 					if(release_pos == 3*TILE_SIZE){
 						release_pos = 999;
 						acceleration_draw++;
-						accelerationDraw(ghost1);     //losowany accX
-						ghost1->posY = j*TILE_SIZE;
-						ghost1->accelerationY = 0;
-						ghost1->release_moment = 0;
+						accelerationDraw(fork1); //losowany accX
+						fork1->posY = j*TILE_SIZE;
+						fork1->accelerationY = 0;
+						fork1->release_moment = 0;
 						break;
 					}
 				}
@@ -258,19 +259,19 @@ void finallyReleaseTheGhost(object_s *ghost1){
 	}
 }
 
-void moveGhostOutOfCage(object_s *ghost){
+void moveforkOutOfCage(object_s *fork){
 	int i, j;
 	for(i = 0; i < MAP_W; i++){
 		for(j = 0; j < MAP_H; j++){
-			if (isTileOnTile( ghost->posX, ghost->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
-				//		printf(" %d - i, %d - j,%d - map[i][j].x, %d - map[i][j].y,  %f  - ghostX, %f - ghostY\n ",i,j,map[i][j].x, map[i][j].y, ghost->posX, ghost->posY);
+			if (isTileOnTile( fork->posX, fork->posY, map[i][j].x, map[i][j].y, TILE_SIZE)){
+				//                printf(" %d - i, %d - j,%d - map[i][j].x, %d - map[i][j].y, %f - forkX, %f - forkY\n ",i,j,map[i][j].x, map[i][j].y, fork->posX, fork->posY);
 				if(isObjectOnGate(i,j)){
-					ghost->posX = map[i][j].x;
-					//ghostToPathy(i,j, ghost);
-					ghost->accelerationX = 0;
-					ghost->accelerationY = 0,25;
-					ghost->on_path_moment = 1;
-					ghost->release_moment = 1;
+					fork->posX = map[i][j].x;
+					//forkToPathy(i,j, fork);
+					fork->accelerationX = 0;
+					fork->accelerationY = 0,25;
+					fork->on_path_moment = 1;
+					fork->release_moment = 1;
 					break;
 				}
 			}
@@ -278,45 +279,45 @@ void moveGhostOutOfCage(object_s *ghost){
 	}
 }
 
-void GhostsLogic(){
+void forksLogic(){
 
-	moveGhostInCage(&ghost1);
-	finallyReleaseTheGhost(&ghost1);
-	if(ghost1.release_moment == 0){
-		moveGhostOutOfCage(&ghost1);
+	moveforkInCage(&fork1);
+	finallyReleaseThefork(&fork1);
+	if(fork1.release_moment == 0){
+		moveforkOutOfCage(&fork1);
 	}
-	moveGhostInCage(&ghost2);
-	if(shouldReleaseGhost(&ghost2)){
-		finallyReleaseTheGhost(&ghost2);
+	moveforkInCage(&fork2);
+	if(shouldReleasefork(&fork2)){
+		finallyReleaseThefork(&fork2);
 	}
-	if(ghost1.release_moment == 1){
-		moveGhostOutOfCage(&ghost2);
+	if(fork1.release_moment == 1){
+		moveforkOutOfCage(&fork2);
 	}
 
-	moveGhostInCage(&ghost3);
-	if(shouldReleaseGhost(&ghost3)){
-		finallyReleaseTheGhost(&ghost3);
+	moveforkInCage(&fork3);
+	if(shouldReleasefork(&fork3)){
+		finallyReleaseThefork(&fork3);
 	}
-	moveGhostInCage(&ghost4);
-	if(shouldReleaseGhost(&ghost4)){
-		finallyReleaseTheGhost(&ghost4);
+	moveforkInCage(&fork4);
+	if(shouldReleasefork(&fork4)){
+		finallyReleaseThefork(&fork4);
 	}
-	//printf("%d  %d  %d  %d\n", ghost1.release_counter, ghost2.release_counter, ghost3.release_counter, ghost4.release_counter);
-	ghost1.posY += ghost1.speed*ghost1.accelerationY;
-	ghost2.posY += ghost1.speed*ghost2.accelerationY;
-	ghost3.posY += ghost1.speed*ghost3.accelerationY;
-	ghost4.posY += ghost1.speed*ghost4.accelerationY;
+	//printf("%d %d %d %d\n", fork1.release_counter, fork2.release_counter, fork3.release_counter, fork4.release_counter);
+	fork1.posY += fork1.speed*fork1.accelerationY;
+	fork2.posY += fork1.speed*fork2.accelerationY;
+	fork3.posY += fork1.speed*fork3.accelerationY;
+	fork4.posY += fork1.speed*fork4.accelerationY;
 
-	ghost1.posX += ghost1.speed*ghost1.accelerationX;
-	ghost2.posX += ghost1.speed*ghost2.accelerationX;
-	ghost3.posX += ghost1.speed*ghost3.accelerationX;
-	ghost4.posX += ghost1.speed*ghost4.accelerationX;
+	fork1.posX += fork1.speed*fork1.accelerationX;
+	fork2.posX += fork1.speed*fork2.accelerationX;
+	fork3.posX += fork1.speed*fork3.accelerationX;
+	fork4.posX += fork1.speed*fork4.accelerationX;
 }
 
 void doLogic() {
 	/*
-	newPosX = muffin.posX + muffin.speed*muffin.accelerationX;
-	newPosY = muffin.posY + muffin.speed*muffin.accelerationY;
+        newPosX = muffin.posX + muffin.speed*muffin.accelerationX;
+        newPosY = muffin.posY + muffin.speed*muffin.accelerationY;
 
 
 	 */
@@ -447,6 +448,11 @@ void initFields (){
 	map[10][3].y = 3*TILE_SIZE;
 
 }
+
+void initForks(object_s *fork){
+
+
+}
 void displaySurfaceCookies(cookie_s *cookie){
 	cookie_s *wsk = cookie;
 	while(wsk!= NULL){
@@ -454,6 +460,23 @@ void displaySurfaceCookies(cookie_s *cookie){
 		wsk = wsk->next;
 	}
 }
+
+void displaySurfaceMuffin(object_s *muffin, object_s *fork1, object_s *fork2, object_s *fork3, object_s *fork4){
+
+	if(IsMuffinOnFork(muffin, fork1, TILE_SIZE) ||IsMuffinOnFork(muffin, fork2, TILE_SIZE)){
+		displaySurface(Surf_Display, Surf_DeadMuffin, muffin->posX, muffin->posY);
+
+	}
+	else if(IsMuffinOnFork(muffin, fork3, TILE_SIZE) ||IsMuffinOnFork(muffin, fork4, TILE_SIZE)){
+		displaySurface(Surf_Display, Surf_DeadMuffin, muffin->posX, muffin->posY);
+
+	}
+
+
+	else displaySurface(Surf_Display, Surf_Muffin, muffin->posX, muffin->posY);
+
+}
+
 
 void doGraphics() {
 
@@ -492,12 +515,14 @@ void doGraphics() {
 
 	}
 
-	displaySurface(Surf_Display, Surf_Pig, muffin.posX, muffin.posY);
-	displaySurface(Surf_Display, Surf_Ghost1, ghost1.posX, ghost1.posY);
-	displaySurface(Surf_Display, Surf_Ghost2, ghost2.posX, ghost2.posY);
-	displaySurface(Surf_Display, Surf_Ghost3, ghost3.posX, ghost3.posY);
-	displaySurface(Surf_Display, Surf_Ghost4, ghost4.posX, ghost4.posY);
+
+	displaySurfaceMuffin(&muffin, &fork1, &fork2, &fork3, &fork4);
+	displaySurface(Surf_Display, Surf_fork, fork1.posX, fork1.posY);
+	displaySurface(Surf_Display, Surf_fork, fork2.posX, fork2.posY);
+	displaySurface(Surf_Display, Surf_fork, fork3.posX, fork3.posY);
+	displaySurface(Surf_Display, Surf_fork, fork4.posX, fork4.posY);
 	displaySurfaceCookies(cookieList);
+
 }
 
 
@@ -509,34 +534,34 @@ int main(void) {
 	muffin.posX = 50;
 	muffin.posY = 50;
 
-	ghost1.posX = 300;
-	ghost1.posY = 100;
-	ghost2.posX = 350;
-	ghost2.posY = 100;
-	ghost3.posX = 400;
-	ghost3.posY = 100;
-	ghost4.posX = 450;
-	ghost4.posY = 100;
+	fork1.posX = 300;
+	fork1.posY = 100;
+	fork2.posX = 350;
+	fork2.posY = 100;
+	fork3.posX = 400;
+	fork3.posY = 100;
+	fork4.posX = 450;
+	fork4.posY = 100;
 
-	ghost1.accelerationX = 0;
-	ghost1.accelerationY = OBJECT_ACC;
-	ghost1.speed = 4;
-	ghost2.accelerationX = 0;
-	ghost2.accelerationY = OBJECT_ACC;
-	ghost3.accelerationX = 0;
-	ghost3.accelerationY = OBJECT_ACC;
-	ghost4.accelerationX = 0;
-	ghost4.accelerationY = OBJECT_ACC;
+	fork1.accelerationX = 0;
+	fork1.accelerationY = OBJECT_ACC;
+	fork1.speed = 4;
+	fork2.accelerationX = 0;
+	fork2.accelerationY = OBJECT_ACC;
+	fork3.accelerationX = 0;
+	fork3.accelerationY = OBJECT_ACC;
+	fork4.accelerationX = 0;
+	fork4.accelerationY = OBJECT_ACC;
 
-	ghost1.release_counter = 1;
-	ghost2.release_counter = 1;
-	ghost3.release_counter = 1;
-	ghost4.release_counter = 1;
+	fork1.release_counter = 1;
+	fork2.release_counter = 1;
+	fork3.release_counter = 1;
+	fork4.release_counter = 1;
 
-	ghost1.release_moment = 1;
-	ghost2.release_moment = 1;
-	ghost3.release_moment = 1;
-	ghost4.release_moment = 1;
+	fork1.release_moment = 1;
+	fork2.release_moment = 1;
+	fork3.release_moment = 1;
+	fork4.release_moment = 1;
 
 	initFields();
 
@@ -555,13 +580,34 @@ int main(void) {
 		return 0;
 	}
 
-	if((Surf_Pig = SDL_LoadBMP("images/piggy.bmp")) == NULL) {
+
+	if(IsMuffinOnFork(&muffin, &fork1, TILE_SIZE)){
+		printf("vsdaGhfds\n\n\n");
+		if((Surf_Muffin = SDL_LoadBMP("images/dead_piggy.bmp")) == NULL) {
+
+			printf("error while loading BMP\n");
+
+		}
+
+	}
+
+
+	if((Surf_Muffin = SDL_LoadBMP("images/dead_piggy.bmp")) == NULL) {
 
 		printf("error while loading BMP\n");
 
 	}
-		Uint32 colorkey = SDL_MapRGB( Surf_Pig->format, 0, 0, 0 );
-		SDL_SetColorKey(Surf_Pig, SDL_SRCCOLORKEY, colorkey);
+
+
+
+
+	if((Surf_Muffin = SDL_LoadBMP("images/piggy.bmp")) == NULL) {
+
+		printf("error while loading BMP\n");
+
+	}
+	Uint32 colorkey = SDL_MapRGB( Surf_Muffin->format, 0, 0, 0 );
+	SDL_SetColorKey(Surf_Muffin, SDL_SRCCOLORKEY, colorkey);
 
 
 
@@ -574,39 +620,39 @@ int main(void) {
 
 	}
 
-	if((Surf_Ghost1 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+	if((Surf_fork = SDL_LoadBMP("images/fork.bmp")) == NULL) {
 
 		printf("error while loading BMP\n");
 
 	}
-	Uint32 colorkey2 = SDL_MapRGB( Surf_Ghost1->format, 255, 255, 255 );
-	SDL_SetColorKey(Surf_Ghost1, SDL_SRCCOLORKEY, colorkey2);
+	Uint32 colorkey2 = SDL_MapRGB( Surf_fork->format, 255, 255, 255 );
+	SDL_SetColorKey(Surf_fork, SDL_SRCCOLORKEY, colorkey2);
 
-	if((Surf_Ghost2 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+	/* if((Surf_fork2 = SDL_LoadBMP("images/fork.bmp")) == NULL) {
 
-		printf("error while loading BMP\n");
+                printf("error while loading BMP\n");
 
-	}
-	Uint32 colorkey3 = SDL_MapRGB( Surf_Ghost2->format, 255, 255, 255 );
-	SDL_SetColorKey(Surf_Ghost2, SDL_SRCCOLORKEY, colorkey3);
+        }
+        Uint32 colorkey3 = SDL_MapRGB( Surf_fork2->format, 255, 255, 255 );
+        SDL_SetColorKey(Surf_fork2, SDL_SRCCOLORKEY, colorkey3);
 
-	if((Surf_Ghost3 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+        if((Surf_fork3 = SDL_LoadBMP("images/fork.bmp")) == NULL) {
 
-		printf("error while loading BMP\n");
+                printf("error while loading BMP\n");
 
-	}
-	Uint32 colorkey4 = SDL_MapRGB( Surf_Ghost3->format, 255, 255, 255 );
-	SDL_SetColorKey(Surf_Ghost3, SDL_SRCCOLORKEY, colorkey4);
+        }
+        Uint32 colorkey4 = SDL_MapRGB( Surf_fork3->format, 255, 255, 255 );
+        SDL_SetColorKey(Surf_fork3, SDL_SRCCOLORKEY, colorkey4);
 
-	if((Surf_Ghost4 = SDL_LoadBMP("images/ghost.bmp")) == NULL) {
+        if((Surf_fork4 = SDL_LoadBMP("images/fork.bmp")) == NULL) {
 
-		printf("error while loading BMP\n");
+                printf("error while loading BMP\n");
 
-	}
-	Uint32 colorkey5 = SDL_MapRGB( Surf_Ghost4->format, 255, 255, 255 );
-	SDL_SetColorKey(Surf_Ghost4, SDL_SRCCOLORKEY, colorkey5);
+        }
+        Uint32 colorkey5 = SDL_MapRGB( Surf_fork4->format, 255, 255, 255 );
+        SDL_SetColorKey(Surf_fork4, SDL_SRCCOLORKEY, colorkey5);
 
-
+	 */
 	if((Surf_Path = SDL_LoadBMP("images/path.bmp")) == NULL) {
 		printf("error while loading BMP\n");
 	}
@@ -634,8 +680,13 @@ int main(void) {
 		SDL_FillRect(Surf_Display, NULL, 12852252);
 
 		doLogic();
-		GhostsLogic();
+		forksLogic();
 		doGraphics();
+
+		if(IsMuffinOnFork(&muffin, &fork1, TILE_SIZE)){
+			muffin.accelerationX = 0;
+			muffin.accelerationY = 0;
+		}
 
 		if(cookie_amount <= 4){
 			deleteCookie(cookieList, &muffin, TILE_SIZE);
@@ -644,13 +695,13 @@ int main(void) {
 			cookie_delay++;
 
 		}
-		//r	printf("%d\n", cookie_delay);
+		//r        printf("%d\n", cookie_delay);
 		//drawCookiePosition(0,0);
-		//	printObjectProp(&m;uffin);
-		//	printFieldProp(5,3);
-		//	printFieldProp(4,3);
-		//	printFieldProp(1,3);
-		//	printer();
+		//        printObjectProp(&m;uffin);
+		//        printFieldProp(5,3);
+		//        printFieldProp(4,3);
+		//        printFieldProp(1,3);
+		//        printer();
 		SDL_Flip(Surf_Display);
 	}
 }
